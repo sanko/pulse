@@ -4,6 +4,8 @@
 #include "compiler/codegen.c"
 #include "compiler/lexer.c"
 #include "compiler/parser.c"
+#include "emit/aarch64/emit_arm64.c"
 #include "emit/elf/emit_elf.c"
 #include "emit/emit_math.c"
 #include "emit/pe/emit_pe.c"
+#include "emit/x64/emit_x64.c"

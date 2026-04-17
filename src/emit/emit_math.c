@@ -19,6 +19,10 @@
  * - Binary serialization for output formats
  * - Math operations for x86-64 and ARM64 architectures
  *
+ * Architecture-specific instruction encoding is delegated to:
+ * - x64/emit_x64.c for x86-64
+ * - aarch64/emit_arm64.c for ARM64
+ *
  * The emit system generates machine code that can be:
  * - Executed directly via JIT (copy to executable memory)
  * - Written as raw binary (for JIT use)
@@ -26,16 +30,18 @@
  * - Written as ELF executable (Unix)
  */
 #define PULSE_BUILDING
+#include "pulse/emit/emit_math.h"
+#include "aarch64/emit_arm64.h"
 #include "common/compat_c23.h"
+#include "elf/emit_elf.h"
 #include "emit_internals.h"
+#include "pe/emit_pe.h"
 #include "pulse/emit/emit.h"
+#include "x64/emit_x64.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
-pulse_status emit_write_elf_exec(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
-pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
 pulse_status emit_write_pe_exec_internal(emit_context_t * ctx,
                                          uint8_t ** out_data,
                                          size_t * out_size,
@@ -577,435 +583,483 @@ PULSE_API pulse_status emit_write_pe_exec(const emit_context_t * ctx, const char
 /**
  * Copyright (c) 2025 Sanko Robinson
  *
- * This source code is dual-licensed under the Artistic License 2.0 or the MIT License.
- * You may choose to use the code under the terms of either license.
- *
  * SPDX-License-Identifier: (Artistic-2.0 OR MIT)
  */
-/**
- * @file emit_math.c
- * @brief Math operations for JIT code generation (x86-64 and ARM64).
- */
-#include "elf/emit_elf.h"
-#include "emit_internals.h"
-#include "pe/emit_pe.h"
-#include "pulse/emit/emit.h"
-#include "pulse/emit/emit_math.h"
-#include <stdio.h>
-#include <string.h>
 
-#define EMIT_CHECK(x)            \
-    do {                         \
-        pulse_status _s = (x);   \
-        if (_s != PULSE_SUCCESS) \
-            return _s;           \
-    } while (0)
-
-#define EMIT_REG_NEEDS_REX(reg) ((reg) >= 8)
-
-static pulse_status emit_x86_rex(emit_context_t * ctx, bool w, bool r, bool x, bool b) {
-    if (ctx->arch == EMIT_ARCH_X86_64 && (w || r || x || b)) {
-        uint8_t rex = 0x40 | (w << 3) | (r << 2) | (x << 1) | b;
-        return emit_emit_u8(ctx, rex);
-    }
-    return PULSE_SUCCESS;
-}
+/* ============================================================================
+ * Architecture-specific instruction emitters
+ * ============================================================================*/
 
 PULSE_API pulse_status emit_math_mov_imm(emit_context_t * ctx, emit_register_t dest, uint64_t imm) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, false, false, EMIT_REG_NEEDS_REX(dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xB8 | (dest & 0x07)));
-        EMIT_CHECK(emit_emit_u64(ctx, imm));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_mov_imm(ctx, dest, imm);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_movz(ctx, dest, (uint16_t)(imm & 0xFFFF), 0, true);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
+
 PULSE_API pulse_status emit_math_movq_gpr_xmm(emit_context_t * ctx, emit_register_t gpr_dest, emit_register_t xmm_src) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        /* MOVQ r64, xmm -> 66 REX.W 0F 7E /r */
-        EMIT_CHECK(emit_emit_u8(ctx, 0x66));
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(xmm_src), false, EMIT_REG_NEEDS_REX(gpr_dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x0F));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x7E));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((xmm_src & 0x07) << 3) | (gpr_dest & 0x07)));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
+
 PULSE_API pulse_status emit_math_mov_reg(emit_context_t * ctx, emit_register_t dest, emit_register_t src) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(src), false, EMIT_REG_NEEDS_REX(dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x89));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((src & 0x07) << 3) | (dest & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_mov_reg(ctx, dest, src);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_add(ctx, dest, src, src);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_add(emit_context_t * ctx, emit_register_t dest, emit_register_t src) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(src), false, EMIT_REG_NEEDS_REX(dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x01));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((src & 0x07) << 3) | (dest & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_add(ctx, dest, src);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_add(ctx, dest, dest, src);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_add_imm(emit_context_t * ctx, emit_register_t dest, int32_t imm) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, false, false, EMIT_REG_NEEDS_REX(dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x81));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | (dest & 0x07)));
-        EMIT_CHECK(emit_emit_u32(ctx, (uint32_t)imm));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_add_imm(ctx, dest, imm);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_adds(ctx, dest, dest, dest);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_sub(emit_context_t * ctx, emit_register_t dest, emit_register_t src) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(src), false, EMIT_REG_NEEDS_REX(dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x29));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((src & 0x07) << 3) | (dest & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_sub(ctx, dest, src);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_sub(ctx, dest, dest, src);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_sub_imm(emit_context_t * ctx, emit_register_t dest, int32_t imm) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, false, false, EMIT_REG_NEEDS_REX(dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x81));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xE8 | (dest & 0x07)));
-        EMIT_CHECK(emit_emit_u32(ctx, (uint32_t)imm));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_sub_imm(ctx, dest, imm);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_mul(emit_context_t * ctx, emit_register_t src) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, false, false, EMIT_REG_NEEDS_REX(src)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xF7));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xE0 | (src & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_mul(ctx, src);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_imul_imm(emit_context_t * ctx, emit_register_t dest, int32_t imm) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(dest), false, EMIT_REG_NEEDS_REX(dest)));
-        if (imm >= -128 && imm <= 127) {
-            EMIT_CHECK(emit_emit_u8(ctx, 0x6B));
-            EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((dest & 0x07) << 3) | (dest & 0x07)));
-            EMIT_CHECK(emit_emit_u8(ctx, (uint8_t)imm));
-        }
-        else {
-            EMIT_CHECK(emit_emit_u8(ctx, 0x69));
-            EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((dest & 0x07) << 3) | (dest & 0x07)));
-            EMIT_CHECK(emit_emit_u32(ctx, (uint32_t)imm));
-        }
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_imul_imm(ctx, dest, imm);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_and(emit_context_t * ctx, emit_register_t dest, emit_register_t src) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(src), false, EMIT_REG_NEEDS_REX(dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x21));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((src & 0x07) << 3) | (dest & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_and(ctx, dest, src);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_and(ctx, dest, dest, src);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_or(emit_context_t * ctx, emit_register_t dest, emit_register_t src) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(src), false, EMIT_REG_NEEDS_REX(dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x09));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((src & 0x07) << 3) | (dest & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_or(ctx, dest, src);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_orr(ctx, dest, dest, src);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_xor(emit_context_t * ctx, emit_register_t dest, emit_register_t src) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(src), false, EMIT_REG_NEEDS_REX(dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x31));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((src & 0x07) << 3) | (dest & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_xor(ctx, dest, src);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_eor(ctx, dest, dest, src);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_not(emit_context_t * ctx, emit_register_t reg) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, false, false, EMIT_REG_NEEDS_REX(reg)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xF7));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xD0 | (reg & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_not(ctx, reg);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_neg(emit_context_t * ctx, emit_register_t reg) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, false, false, EMIT_REG_NEEDS_REX(reg)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xF7));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xD8 | (reg & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_neg(ctx, reg);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_shl(emit_context_t * ctx, emit_register_t dest, emit_register_t src) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        if (src != EMIT_REG_RCX)
-            return PULSE_ERROR_INVALID_ARGUMENT;
-        EMIT_CHECK(emit_x86_rex(ctx, true, false, false, EMIT_REG_NEEDS_REX(dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xD3));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xE0 | (dest & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_shl(ctx, dest, src);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_shr(emit_context_t * ctx, emit_register_t dest, emit_register_t src) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        if (src != EMIT_REG_RCX)
-            return PULSE_ERROR_INVALID_ARGUMENT;
-        EMIT_CHECK(emit_x86_rex(ctx, true, false, false, EMIT_REG_NEEDS_REX(dest)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xD3));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xE8 | (dest & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_shr(ctx, dest, src);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
+}
+
+PULSE_API pulse_status emit_math_sal(emit_context_t * ctx, emit_register_t reg, uint8_t amount) {
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_sal(ctx, reg, amount);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    }
+}
+
+PULSE_API pulse_status emit_math_sar(emit_context_t * ctx, emit_register_t reg, uint8_t amount) {
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_sar(ctx, reg, amount);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    }
 }
 
 PULSE_API pulse_status emit_math_cmp(emit_context_t * ctx, emit_register_t a, emit_register_t b) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(b), false, EMIT_REG_NEEDS_REX(a)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x39));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((b & 0x07) << 3) | (a & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_cmp(ctx, a, b);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_cmp(ctx, a, b);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_cmp_imm(emit_context_t * ctx, emit_register_t reg, int32_t imm) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, false, false, EMIT_REG_NEEDS_REX(reg)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x81));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xF8 | (reg & 0x07)));
-        EMIT_CHECK(emit_emit_u32(ctx, (uint32_t)imm));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_cmp_imm(ctx, reg, imm);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_test(emit_context_t * ctx, emit_register_t a, emit_register_t b) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(b), false, EMIT_REG_NEEDS_REX(a)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x85));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((b & 0x07) << 3) | (a & 0x07)));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_test(ctx, a, b);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
-
-static const uint8_t x86_jcc_opcodes[16] = {
-    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F};
 
 PULSE_API pulse_status emit_math_jmp(emit_context_t * ctx, const char * label) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        uint64_t jump_offset = ctx->current_section->size;
-        EMIT_CHECK(emit_emit_u8(ctx, 0xE9));
-        EMIT_CHECK(emit_emit_u32(ctx, 0));
-        EMIT_CHECK(emit_add_relocation(ctx, label, jump_offset + 1, 4, 5));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_jmp(ctx, label);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_b(ctx, label);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_jmp_cc(emit_context_t * ctx, emit_cc_t cc, const char * label) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        uint64_t jump_offset = ctx->current_section->size;
-        EMIT_CHECK(emit_emit_u8(ctx, 0x0F));
-        EMIT_CHECK(emit_emit_u8(ctx, x86_jcc_opcodes[cc]));
-        EMIT_CHECK(emit_emit_u32(ctx, 0));
-        EMIT_CHECK(emit_add_relocation(ctx, label, jump_offset + 2, 4, 6));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_jmp_cc(ctx, cc, label);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_b_cond(ctx, cc, label);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_call(emit_context_t * ctx, const char * name) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        uint64_t call_offset = ctx->current_section->size;
-        EMIT_CHECK(emit_emit_u8(ctx, 0xE8));
-        EMIT_CHECK(emit_emit_u32(ctx, 0));
-        EMIT_CHECK(emit_add_relocation(ctx, name, call_offset + 1, 4, 5));
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_call(ctx, name);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_bl(ctx, name);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_prologue(emit_context_t * ctx) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_emit_u8(ctx, 0x55));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x48));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x8B));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xEC));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_prologue(ctx);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_epilogue(emit_context_t * ctx) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC9));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC3));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_epilogue(ctx);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_ret(ctx, 30);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_ret(emit_context_t * ctx) {
-    if (ctx->arch == EMIT_ARCH_X86_64)
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC3));
-    return PULSE_SUCCESS;
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_ret(ctx);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_ret(ctx, 30);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    }
 }
 
 PULSE_API pulse_status emit_math_push(emit_context_t * ctx, emit_register_t reg) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, false, false, false, EMIT_REG_NEEDS_REX(reg)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x50 | (reg & 0x07)));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_push(ctx, reg);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_pop(emit_context_t * ctx, emit_register_t reg) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_x86_rex(ctx, false, false, false, EMIT_REG_NEEDS_REX(reg)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x58 | (reg & 0x07)));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_pop(ctx, reg);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_load_reg(emit_context_t * ctx,
                                           emit_register_t dest,
                                           emit_register_t base,
                                           int32_t offset) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        uint8_t mod = (offset == 0 && (base & 0x07) != 5) ? 0x00 : ((offset >= -128 && offset <= 127) ? 0x40 : 0x80);
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(dest), false, EMIT_REG_NEEDS_REX(base)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x8B));
-        EMIT_CHECK(emit_emit_u8(ctx, mod | ((dest & 0x07) << 3) | (base & 0x07)));
-        if ((base & 0x07) == 4)
-            EMIT_CHECK(emit_emit_u8(ctx, 0x24));
-        if (mod == 0x40)
-            EMIT_CHECK(emit_emit_u8(ctx, (uint8_t)offset));
-        else if (mod == 0x80)
-            EMIT_CHECK(emit_emit_u32(ctx, (uint32_t)offset));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_load_reg(ctx, dest, base, offset);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_ldr(ctx, dest, base, offset);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_store_reg(emit_context_t * ctx,
                                            emit_register_t base,
                                            int32_t offset,
                                            emit_register_t src) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        uint8_t mod = (offset == 0 && (base & 0x07) != 5) ? 0x00 : ((offset >= -128 && offset <= 127) ? 0x40 : 0x80);
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(src), false, EMIT_REG_NEEDS_REX(base)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x89));
-        EMIT_CHECK(emit_emit_u8(ctx, mod | ((src & 0x07) << 3) | (base & 0x07)));
-        if ((base & 0x07) == 4)
-            EMIT_CHECK(emit_emit_u8(ctx, 0x24));
-        if (mod == 0x40)
-            EMIT_CHECK(emit_emit_u8(ctx, (uint8_t)offset));
-        else if (mod == 0x80)
-            EMIT_CHECK(emit_emit_u32(ctx, (uint32_t)offset));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_store_reg(ctx, base, offset, src);
+    case EMIT_ARCH_AARCH64:
+        return emit_arm64_str(ctx, base, offset, src);
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_load_sym(emit_context_t * ctx, emit_register_t dest, const char * sym) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        uint64_t load_offset = ctx->current_section->size;
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(dest), false, false));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x8B));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x05 | ((dest & 0x07) << 3)));
-        EMIT_CHECK(emit_emit_u32(ctx, 0));
-        EMIT_CHECK(emit_add_relocation(ctx, sym, load_offset + 3, 4, 7));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_load_sym(ctx, dest, sym);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_store_sym(emit_context_t * ctx, const char * sym, emit_register_t src) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        uint64_t store_offset = ctx->current_section->size;
-        EMIT_CHECK(emit_x86_rex(ctx, true, EMIT_REG_NEEDS_REX(src), false, false));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x89));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x05 | ((src & 0x07) << 3)));
-        EMIT_CHECK(emit_emit_u32(ctx, 0));
-        EMIT_CHECK(emit_add_relocation(ctx, sym, store_offset + 3, 4, 7));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return emit_x64_store_sym(ctx, sym, src);
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
-/* Floating Point Operations */
 PULSE_API pulse_status emit_math_movsd_reg(emit_context_t * ctx, emit_register_t dest, emit_register_t src) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_emit_u8(ctx, 0xF2));
-        EMIT_CHECK(emit_x86_rex(ctx, false, EMIT_REG_NEEDS_REX(dest), false, EMIT_REG_NEEDS_REX(src)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x0F));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x10));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((dest & 0x07) << 3) | (src & 0x07)));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_addsd(emit_context_t * ctx, emit_register_t dest, emit_register_t src) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_emit_u8(ctx, 0xF2));
-        EMIT_CHECK(emit_x86_rex(ctx, false, EMIT_REG_NEEDS_REX(dest), false, EMIT_REG_NEEDS_REX(src)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x0F));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x58));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((dest & 0x07) << 3) | (src & 0x07)));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
 
 PULSE_API pulse_status emit_math_subsd(emit_context_t * ctx, emit_register_t dest, emit_register_t src) {
-    if (ctx->arch == EMIT_ARCH_X86_64) {
-        EMIT_CHECK(emit_emit_u8(ctx, 0xF2));
-        EMIT_CHECK(emit_x86_rex(ctx, false, EMIT_REG_NEEDS_REX(dest), false, EMIT_REG_NEEDS_REX(src)));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x0F));
-        EMIT_CHECK(emit_emit_u8(ctx, 0x5C));
-        EMIT_CHECK(emit_emit_u8(ctx, 0xC0 | ((dest & 0x07) << 3) | (src & 0x07)));
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    switch (ctx->arch) {
+    case EMIT_ARCH_X86_64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    case EMIT_ARCH_AARCH64:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
-    return PULSE_SUCCESS;
 }
