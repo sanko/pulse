@@ -1,0 +1,62 @@
+# Doxyfile 1.9.1
+
+#---------------------------------------------------------------------------
+# Project related configuration options
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "infix"
+PROJECT_BRIEF          = "A JIT-Powered FFI Library for C"
+# Use the main README file as the front page of the documentation.
+# The path is relative to this Doxyfile's location.
+USE_MDFILE_AS_MAINPAGE = README.md
+
+#---------------------------------------------------------------------------
+# Build related configuration options
+#---------------------------------------------------------------------------
+# Set the input directories. Paths are relative to this Doxyfile.
+INPUT                  = README.md include src docs t eg CHANGELOG.md TODO.md SECURITY.md fuzz
+RECURSIVE              = YES
+FILE_PATTERNS          = *.h *.c *.md
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+EXCLUDE                = docs/doxygen-awesome-css/docs docs/doxygen-awesome-css
+
+#---------------------------------------------------------------------------
+# HTML related configuration options
+#---------------------------------------------------------------------------
+GENERATE_HTML          = YES
+# Output directory relative to where doxygen is run (the project root).
+OUTPUT_DIRECTORY       = ./docs/api
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+
+# --- Doxygen Awesome CSS Theme Integration ---
+# These paths are relative to the OUTPUT_DIRECTORY's html folder.
+# The workflow will copy the theme files to a place where Doxygen can find them.
+GENERATE_TREEVIEW      = YES # optional. Also works without treeview
+DISABLE_INDEX = NO
+FULL_SIDEBAR = NO
+HTML_EXTRA_STYLESHEET  = ./docs/doxygen-awesome-css/doxygen-awesome.css \
+                         ./docs/doxygen-awesome-css/doxygen-awesome-sidebar-only.css \
+                         ./docs/doxygen-awesome-css/doxygen-awesome-sidebar-only-darkmode-toggle.css
+HTML_EXTRA_FILES       = ./docs/doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js \
+                         ./docs/doxygen-awesome-css/doxygen-awesome-interactive-toc.js \
+                         ./docs/doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js
+HTML_COLORSTYLE        = LIGHT # required with Doxygen >= 1.9.5
+HTML_HEADER            = ./docs/header.html
+
+MARKDOWN_SUPPORT       = YES
+FLEX_MARKDOWN          = YES
+
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+GENERATE_TREEVIEW      = YES
+FULL_PAGE_TABS         = YES
+TOC_EXPAND             = YES
+
+#---------------------------------------------------------------------------
+# LaTeX and Dot configuration
+#---------------------------------------------------------------------------
+GENERATE_LATEX         = NO
+HAVE_DOT               = YES
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES

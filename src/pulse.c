@@ -1,0 +1,9 @@
+#define PULSE_BUILDING
+#include "common/compat_c23.h"
+#include "common/error.c"
+#include "compiler/codegen.c"
+#include "compiler/lexer.c"
+#include "compiler/parser.c"
+#include "emit/elf/emit_elf.c"
+#include "emit/emit_math.c"
+#include "emit/pe/emit_pe.c"
