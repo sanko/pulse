@@ -339,7 +339,7 @@ sub show_help {
       helgrindtest       Runs the threading stress test under Valgrind/Helgrind.
       helgrindtest:bare  Runs a "barebones" Helgrind test with no testing framework.
       clean              Removes all build and coverage artifacts.
-      fuzz:<name>        Builds a specific fuzzer (e.g., fuzz:types, fuzz:trampoline, fuzz:signature, fuzz:abi, fuzz:direct, fuzz:roundtrip).
+      fuzz:<name>        Builds a specific fuzzer (e.g., fuzz:emit, fuzz:lexer).
 
     Options:
       --cc, --compiler=<s>  Force a specific compiler (e.g., 'msvc', 'gcc', 'egcc', 'clang').
@@ -1055,48 +1055,54 @@ sub run_valgrind_test {
 
 sub run_fuzz_test {
     my ( $config, $obj_suffix, $harness_name ) = @_;
-    die "Error: Must provide a fuzz harness name (e.g., 'types', 'trampoline')." unless $harness_name;
-    my $is_gcc_fuzz = ( $config->{compiler} eq 'gcc' );
-    if ($is_gcc_fuzz) {
-        die "Error: Fuzzing with GCC requires AFL++ to be installed." unless command_exists('afl-gcc');
-        print "\nGCC compiler detected. Will build for AFL++ fuzzing.\n";
+    die "Error: Must provide a fuzz harness name (e.g., 'emit', 'lexer')." unless $harness_name;
+
+    my $use_afl = 0;
+    my $fuzz_cc = $config->{cc};
+
+    if (command_exists('afl-clang-fast')) {
+        $use_afl = 1;
+        $fuzz_cc = 'afl-clang-fast';
+        print "\nAFL++ clang detected. Building for AFL++ fuzzing.\n";
+    }
+    elsif (command_exists('afl-gcc')) {
+        $use_afl = 1;
+        $fuzz_cc = 'afl-gcc';
+        print "\nAFL++ gcc detected. Building for AFL++ fuzzing.\n";
+    }
+    elsif ($config->{compiler} eq 'clang') {
+        print "\nClang compiler detected. Building for libFuzzer fuzzing.\n";
     }
     else {
-        die "Error: Fuzzing currently requires 'clang' or 'gcc'." unless $config->{compiler} eq 'clang';
-        print "\nClang compiler detected. Will build for libFuzzer fuzzing.\n";
+        die "Error: Fuzzing requires AFL++ or clang with libFuzzer.";
     }
+
     my $fuzz_harness_c = File::Spec->catfile( 'fuzz', "fuzz_$harness_name.c" );
-    my $fuzz_helpers_c = File::Spec->catfile( 'fuzz', "fuzz_helpers.c" );
     die "Error: Fuzzing harness not found at '$fuzz_harness_c'" unless -f $fuzz_harness_c;
-    die "Error: Fuzzing helpers not found at '$fuzz_helpers_c'" unless -f $fuzz_helpers_c;
     print "\nPreparing Fuzzing Build for Harness: $harness_name\n";
     my @fuzz_cflags = @{ $config->{cflags} };
-    push @fuzz_cflags, '-Ifuzz', '-I' . File::Spec->catdir( $FindBin::Bin, 'src/core' );
+    push @fuzz_cflags, '-Ifuzz', '-I' . File::Spec->catdir( $FindBin::Bin, 'include' );
     @fuzz_cflags = grep { $_ !~ /^-O\d/ } @fuzz_cflags;
     my %fuzz_config = %$config;
-    my $fuzz_cc     = $config->{cc};
 
-    if ($is_gcc_fuzz) {
-        $fuzz_cc = 'afl-gcc';
-        push @fuzz_cflags, '-DUSE_AFL=1', '-I/usr/local/include';
+    if ($use_afl) {
+        push @fuzz_cflags, '-DUSE_AFL=1';
     }
-    else { push @fuzz_cflags, '-g', '-fsanitize=fuzzer,address,undefined'; }
+    else {
+        push @fuzz_cflags, '-g', '-fsanitize=fuzzer,address,undefined';
+    }
     $fuzz_config{cflags} = \@fuzz_cflags;
     $fuzz_config{cc}     = $fuzz_cc;
     my @obj_files  = compile_objects( \%fuzz_config, $obj_suffix );
-    my $helper_obj = $fuzz_helpers_c;
-    $helper_obj =~ s{\.c$}{$obj_suffix}ix;
-    run_command( $fuzz_cc, @fuzz_cflags, "-c", "-o", $helper_obj, $fuzz_helpers_c );
-    push @obj_files, $helper_obj;
     print "\nCompiling fuzzing harness...\n";
     my $fuzz_exe = "fuzz_${harness_name}_harness" . $Config{_exe};
     my @ldflags  = @{ $config->{ldflags} };
-    if ( $config->{compiler} eq 'clang' ) { push @ldflags, '-fsanitize=fuzzer,address,undefined'; }
+    if (!$use_afl) { push @ldflags, '-fsanitize=fuzzer,address,undefined'; }
     my @cmd = ( $fuzz_cc, @fuzz_cflags, '-o', $fuzz_exe, $fuzz_harness_c, @obj_files, @ldflags );
     run_command(@cmd);
     print "\nFuzz Harness Built Successfully: $fuzz_exe\n";
 
-    if ($is_gcc_fuzz) {
+    if ($use_afl) {
         print "To run the AFL++ fuzzer, first create a directory for sample inputs (corpus):\n";
         print "  mkdir -p corpus && echo 'seed' > corpus/seed.txt\n\n";
         print "Then, run afl-fuzz:\n  afl-fuzz -i corpus -o findings -- ./$fuzz_exe\n\n";
