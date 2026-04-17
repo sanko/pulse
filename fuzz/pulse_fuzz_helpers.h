@@ -6,11 +6,11 @@
 #define PULSE_FUZZ_HELPERS_H
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #define MAX_TOKEN_COUNT 10000
 

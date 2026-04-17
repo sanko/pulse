@@ -3,8 +3,8 @@
  * @brief Fuzzer for the Pulse lexer/tokenizer.
  */
 
-#include "pulse_fuzz_helpers.h"
 #include "pulse/pulse.h"
+#include "pulse_fuzz_helpers.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -29,9 +29,8 @@ static void fuzz_lexer_run(const uint8_t * data, size_t size) {
     fuzz_input_t in = {.data = data, .size = size, .pos = 0};
 
     char * source = fuzz_null_terminate(&in);
-    if (!source) {
+    if (!source)
         return;
-    }
 
     lexer_t * lexer = lexer_create(source);
     if (!lexer) {
@@ -44,9 +43,8 @@ static void fuzz_lexer_run(const uint8_t * data, size_t size) {
         tok = lexer_next_token(lexer);
         g_lexer_token_count++;
 
-        if (tok.type == TOKEN_ERROR) {
+        if (tok.type == TOKEN_ERROR)
             g_lexer_errors++;
-        }
 
         if (tok.type == TOKEN_STRING && tok.string_val)
             free(tok.string_val);

@@ -3,9 +3,9 @@
  * @brief Fuzzer for the Pulse emit library (JIT code generation).
  */
 
-#include "pulse_fuzz_helpers.h"
 #include "pulse/emit/emit.h"
 #include "pulse/emit/emit_math.h"
+#include "pulse_fuzz_helpers.h"
 
 #ifndef USE_AFL
 int LLVMFuzzerTestOneInput(const uint8_t * data, size_t size);
@@ -38,9 +38,8 @@ static void fuzz_emit_basic(fuzz_input_t * in) {
 
     const uint8_t * binary = NULL;
     size_t binary_size = 0;
-    if (ctx) {
+    if (ctx)
         emit_get_binary(ctx, &binary, &binary_size);
-    }
 
     if (ctx)
         emit_destroy(ctx);
@@ -116,9 +115,8 @@ static void fuzz_emit_math(fuzz_input_t * in) {
 
     const uint8_t * binary = NULL;
     size_t binary_size = 0;
-    if (ctx) {
+    if (ctx)
         emit_get_binary(ctx, &binary, &binary_size);
-    }
 
     if (ctx)
         emit_destroy(ctx);

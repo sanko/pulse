@@ -10,7 +10,6 @@
 *.old
 *.orig
 *.patch
-third_party/dyncall/
 *.a
 *.gc*
 .xmake/
@@ -44,6 +43,7 @@ docs/api/
 *.dll
 fuzz_*_harness
 preprocessed.cpp
+findings/
 
 # Ignore extensionless binaries in t/ but keep sources and include dir
 t/*

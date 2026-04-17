@@ -55,7 +55,6 @@ typedef pthread_t pulse_thread_h;
 #define MAX_VREGS 64
 #define PHYS_POOL_SIZE 3
 
-
 static uint64_t pulse_hash_get(pulse_hash_t * h, const char * key) {
     for (size_t i = 0; i < h->capacity; i++)
         if (h->entries[i].key && strcmp(h->entries[i].key, key) == 0)

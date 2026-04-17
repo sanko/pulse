@@ -1056,27 +1056,24 @@ sub run_valgrind_test {
 sub run_fuzz_test {
     my ( $config, $obj_suffix, $harness_name ) = @_;
     die "Error: Must provide a fuzz harness name (e.g., 'emit', 'lexer')." unless $harness_name;
-
     my $use_afl = 0;
     my $fuzz_cc = $config->{cc};
-
-    if (command_exists('afl-clang-fast')) {
+    if ( command_exists('afl-clang-fast') ) {
         $use_afl = 1;
         $fuzz_cc = 'afl-clang-fast';
         print "\nAFL++ clang detected. Building for AFL++ fuzzing.\n";
     }
-    elsif (command_exists('afl-gcc')) {
+    elsif ( command_exists('afl-gcc') ) {
         $use_afl = 1;
         $fuzz_cc = 'afl-gcc';
         print "\nAFL++ gcc detected. Building for AFL++ fuzzing.\n";
     }
-    elsif ($config->{compiler} eq 'clang') {
+    elsif ( $config->{compiler} eq 'clang' ) {
         print "\nClang compiler detected. Building for libFuzzer fuzzing.\n";
     }
     else {
         die "Error: Fuzzing requires AFL++ or clang with libFuzzer.";
     }
-
     my $fuzz_harness_c = File::Spec->catfile( 'fuzz', "fuzz_$harness_name.c" );
     die "Error: Fuzzing harness not found at '$fuzz_harness_c'" unless -f $fuzz_harness_c;
     print "\nPreparing Fuzzing Build for Harness: $harness_name\n";
@@ -1093,11 +1090,11 @@ sub run_fuzz_test {
     }
     $fuzz_config{cflags} = \@fuzz_cflags;
     $fuzz_config{cc}     = $fuzz_cc;
-    my @obj_files  = compile_objects( \%fuzz_config, $obj_suffix );
+    my @obj_files = compile_objects( \%fuzz_config, $obj_suffix );
     print "\nCompiling fuzzing harness...\n";
     my $fuzz_exe = "fuzz_${harness_name}_harness" . $Config{_exe};
     my @ldflags  = @{ $config->{ldflags} };
-    if (!$use_afl) { push @ldflags, '-fsanitize=fuzzer,address,undefined'; }
+    if ( !$use_afl ) { push @ldflags, '-fsanitize=fuzzer,address,undefined'; }
     my @cmd = ( $fuzz_cc, @fuzz_cflags, '-o', $fuzz_exe, $fuzz_harness_c, @obj_files, @ldflags );
     run_command(@cmd);
     print "\nFuzz Harness Built Successfully: $fuzz_exe\n";

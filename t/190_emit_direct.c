@@ -1,7 +1,6 @@
 /**
- * @file 890_emit_direct.c
+ * @file 190_emit_direct.c
  * @brief Unified Test Suite: Infix Emit API & Pulse Language Compiler
- *
  */
 
 #define DBLTAP_IMPLEMENTATION
@@ -9,6 +8,7 @@
 #include "common/double_tap.h"
 #include "common/infix_config.h"
 #include "pulse/pulse_common.h"
+#include <ctype.h>
 #include <inttypes.h>
 #include <pulse/emit/emit.h>
 #include <pulse/emit/emit_math.h>
@@ -22,11 +22,25 @@
 #include <process.h>
 #include <windows.h>
 typedef HANDLE pulse_thread_h;
+/* Windows x64 Calling Convention */
+#define REG_ARG0 EMIT_REG_RCX
+#define REG_ARG1 EMIT_REG_RDX
+#define REG_ARG2 EMIT_REG_R8
+#define REG_ARG3 EMIT_REG_R9
+#define SHADOW_SPACE 32
 #else
 #include <pthread.h>
 #include <sys/mman.h>
 #include <unistd.h>
 typedef pthread_t pulse_thread_h;
+/* System V x64 Calling Convention (Linux/macOS) */
+#define REG_ARG0 EMIT_REG_RDI
+#define REG_ARG1 EMIT_REG_RSI
+#define REG_ARG2 EMIT_REG_RDX
+#define REG_ARG3 EMIT_REG_RCX
+#define REG_ARG4 EMIT_REG_R8
+#define REG_ARG5 EMIT_REG_R9
+#define SHADOW_SPACE 0
 #endif
 
 /* ============================================================================
@@ -225,7 +239,6 @@ static uint64_t pulse_hash_get(pulse_hash_t * h, const char * key) {
             return h->entries[i].value;
     return 0;
 }
-
 
 typedef struct {
     uint64_t expected_class;
@@ -868,7 +881,6 @@ TEST {
         free(t);
     }
 
-
     subtest("Namespaces & Operators") {
         plan(2);
         emit_context_t * ctx = create_test_context();
@@ -980,7 +992,7 @@ TEST {
         emit_math_add_imm(ctx, EMIT_REG_RSP, 48);
 #else
         emit_math_mov_imm(ctx, EMIT_REG_RAX, 1);
-        emit_math_mov_imm(ctx, EMIT_REG_RDI, 2);
+        emit_math_mov_imm(ctx, EMIT_REG_RDI, 1); /* stdout */
         emit_math_load_sym(ctx, EMIT_REG_RSI, "msg_ptr");
         emit_math_mov_imm(ctx, EMIT_REG_RDX, hlen);
         emit_emit_u8(ctx, 0x0F);
@@ -1087,13 +1099,13 @@ TEST {
         setup_test_section(ctx);
         emit_define_symbol(ctx, "countdown", EMIT_VISIBILITY_DEFAULT, true);
         emit_emit_label(ctx, "countdown");
-        emit_math_cmp_imm(ctx, EMIT_REG_RCX, 0);
+        emit_math_cmp_imm(ctx, REG_ARG0, 0);
         emit_math_jmp_cc(ctx, EMIT_CC_E, "done");
-        emit_math_sub_imm(ctx, EMIT_REG_RCX, 1);
-        emit_math_add_imm(ctx, EMIT_REG_RDX, 1);
+        emit_math_sub_imm(ctx, REG_ARG0, 1);
+        emit_math_add_imm(ctx, REG_ARG1, 1);
         emit_math_jmp(ctx, "countdown");
         emit_emit_label(ctx, "done");
-        emit_math_mov_reg(ctx, EMIT_REG_RAX, EMIT_REG_RDX);
+        emit_math_mov_reg(ctx, EMIT_REG_RAX, REG_ARG1);
         emit_math_ret(ctx);
         const uint8_t * code;
         size_t sz;
@@ -1144,12 +1156,14 @@ TEST {
         emit_context_t * ctx = create_test_context();
         setup_test_section(ctx);
         emit_math_mov_imm(ctx, EMIT_REG_RAX, (uintptr_t)pulse_hash_get);
-        emit_math_mov_imm(ctx, EMIT_REG_RCX, (uintptr_t)h);
-        emit_math_mov_imm(ctx, EMIT_REG_RDX, (uintptr_t)"secret");
-        emit_math_sub_imm(ctx, EMIT_REG_RSP, 32);
+        emit_math_mov_imm(ctx, REG_ARG0, (uintptr_t)h);
+        emit_math_mov_imm(ctx, REG_ARG1, (uintptr_t)"secret");
+        if (SHADOW_SPACE > 0)
+            emit_math_sub_imm(ctx, EMIT_REG_RSP, SHADOW_SPACE);
         emit_emit_u8(ctx, 0xFF);
         emit_emit_u8(ctx, 0xD0);
-        emit_math_add_imm(ctx, EMIT_REG_RSP, 32);
+        if (SHADOW_SPACE > 0)
+            emit_math_add_imm(ctx, EMIT_REG_RSP, SHADOW_SPACE);
         emit_math_ret(ctx);
         const uint8_t * code;
         size_t sz;
@@ -1177,13 +1191,15 @@ TEST {
         emit_context_t * ctx = create_test_context();
         setup_test_section(ctx);
         emit_math_mov_imm(ctx, EMIT_REG_RAX, (uintptr_t)pulse_string_concat);
-        emit_math_mov_imm(ctx, EMIT_REG_RCX, (uintptr_t)vm);
-        emit_math_mov_imm(ctx, EMIT_REG_RDX, (uintptr_t)s1);
-        emit_math_mov_imm(ctx, EMIT_REG_R8, (uintptr_t)s2);
-        emit_math_sub_imm(ctx, EMIT_REG_RSP, 32);
+        emit_math_mov_imm(ctx, REG_ARG0, (uintptr_t)vm);
+        emit_math_mov_imm(ctx, REG_ARG1, (uintptr_t)s1);
+        emit_math_mov_imm(ctx, REG_ARG2, (uintptr_t)s2);
+        if (SHADOW_SPACE > 0)
+            emit_math_sub_imm(ctx, EMIT_REG_RSP, SHADOW_SPACE);
         emit_emit_u8(ctx, 0xFF);
         emit_emit_u8(ctx, 0xD0);
-        emit_math_add_imm(ctx, EMIT_REG_RSP, 32);
+        if (SHADOW_SPACE > 0)
+            emit_math_add_imm(ctx, EMIT_REG_RSP, SHADOW_SPACE);
         emit_math_ret(ctx);
         const uint8_t * code;
         size_t sz;
@@ -1277,22 +1293,19 @@ TEST {
         emit_emit_u8(ctx, 0xD3); /* CALL R11 */
         emit_math_ret(ctx);
         emit_emit_label(ctx, "miss");
-#ifdef _WIN32
-        emit_math_mov_reg(ctx, EMIT_REG_RCX, EMIT_REG_R10);
-        emit_math_mov_reg(ctx, EMIT_REG_RDX, EMIT_REG_RAX);
-        emit_math_mov_imm(ctx, EMIT_REG_R8, (uintptr_t)"identity");
-        emit_math_sub_imm(ctx, EMIT_REG_RSP, 32);
-#else
-        emit_math_mov_reg(ctx, EMIT_REG_RDI, EMIT_REG_R10);
-        emit_math_mov_reg(ctx, EMIT_REG_RSI, EMIT_REG_RAX);
-        emit_math_mov_imm(ctx, EMIT_REG_RDX, (uintptr_t)"identity");
-#endif
+
+        emit_math_mov_reg(ctx, REG_ARG0, EMIT_REG_R10);
+        emit_math_mov_reg(ctx, REG_ARG1, EMIT_REG_RAX);
+        emit_math_mov_imm(ctx, REG_ARG2, (uintptr_t)"identity");
+
+        if (SHADOW_SPACE > 0)
+            emit_math_sub_imm(ctx, EMIT_REG_RSP, SHADOW_SPACE);
         emit_math_mov_imm(ctx, EMIT_REG_RAX, (uintptr_t)pulse_ic_lookup);
         emit_emit_u8(ctx, 0xFF);
         emit_emit_u8(ctx, 0xD0);
-#ifdef _WIN32
-        emit_math_add_imm(ctx, EMIT_REG_RSP, 32);
-#endif
+        if (SHADOW_SPACE > 0)
+            emit_math_add_imm(ctx, EMIT_REG_RSP, SHADOW_SPACE);
+
         emit_emit_u8(ctx, 0xFF);
         emit_emit_u8(ctx, 0xD0);
         emit_math_ret(ctx);

@@ -5,10 +5,12 @@
 #ifndef PULSE_EMIT_ELF_H
 #define PULSE_EMIT_ELF_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
-#define ELF_MAGIC "\x7F" "ELF"
+#define ELF_MAGIC \
+    "\x7F"        \
+    "ELF"
 
 #define ELFCLASS64 2
 #define ELFDATA2LSB 1
@@ -31,7 +33,7 @@
 #define SHF_WRITE 1
 
 #define ELF64_ST_TYPE(info) (((uint32_t)(info)) & 0xF)
-#define ELF64_ST_INFO(bind, type) (((uint8_t)(bind) << 4) | ((type)&0xF))
+#define ELF64_ST_INFO(bind, type) (((uint8_t)(bind) << 4) | ((type) & 0xF))
 
 #define STB_LOCAL 0
 #define STB_GLOBAL 1
