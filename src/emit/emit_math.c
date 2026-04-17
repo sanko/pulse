@@ -19,6 +19,7 @@
 #include <string.h>
 
 pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
+pulse_status emit_write_elf_exec(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
 pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
 
 #define EMIT_DEFAULT_SECTION_CAPACITY 4096
@@ -475,6 +476,9 @@ PULSE_API pulse_status emit_get_binary(const emit_context_t * ctx, const uint8_t
 
     if (ctx->format == EMIT_FORMAT_ELF)
         return emit_write_elf(mutable_ctx, (uint8_t **)out_data, out_size);
+
+    if (ctx->format == EMIT_FORMAT_ELF_EXEC)
+        return emit_write_elf_exec(mutable_ctx, (uint8_t **)out_data, out_size);
 
     if (ctx->format == EMIT_FORMAT_PE)
         return emit_write_pe(mutable_ctx, (uint8_t **)out_data, out_size);

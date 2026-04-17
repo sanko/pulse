@@ -116,7 +116,7 @@ static size_t shstrtab_offset(const uint8_t * shstrtab, const char * name) {
 
 static uint8_t * build_strtab(const char * strings[], size_t num_strings, size_t * out_size) {
     size_t total = 1;
-    for (size_t i = 0; i < num_strings; i++) {
+    for (size_t i = 1; i < num_strings; i++) {
         if (strings[i])
             total += strlen(strings[i]) + 1;
     }
@@ -126,7 +126,7 @@ static uint8_t * build_strtab(const char * strings[], size_t num_strings, size_t
         return NULL;
 
     size_t off = 1;
-    for (size_t i = 0; i < num_strings; i++) {
+    for (size_t i = 1; i < num_strings; i++) {
         if (strings[i]) {
             size_t len = strlen(strings[i]) + 1;
             memcpy(buf + off, strings[i], len);
@@ -151,16 +151,16 @@ static uint8_t * build_symtab(emit_symbol_t * symbols, size_t num_symbols, const
     size_t sym_idx = 1;
     emit_symbol_t * s = symbols;
     while (s && sym_idx < num_symbols) {
-        size_t off = 1;
-        for (size_t i = 1; i < num_symbols && strtab_strings[i]; i++) {
-            if (s->name && strcmp(strtab_strings[i], s->name) == 0) {
-                sym[sym_idx].st_name = (uint32_t)off;
-                break;
+        uint32_t name_off = 0;
+        if (strtab_strings && sym_idx < num_symbols && s->name) {
+            for (size_t i = 1; i < num_symbols && strtab_strings[i]; i++) {
+                if (strcmp(strtab_strings[i], s->name) == 0) {
+                    name_off = (uint32_t)i;
+                    break;
+                }
             }
-            off += strlen(strtab_strings[i]) + 1;
         }
-        if (sym[sym_idx].st_name == 0 && s->name)
-            sym[sym_idx].st_name = (uint32_t)off;
+        sym[sym_idx].st_name = name_off;
         sym[sym_idx].st_info = ELF64_ST_INFO(STB_GLOBAL, s->is_function ? STT_FUNC : STT_OBJECT);
         sym[sym_idx].st_shndx = 0;
         sym[sym_idx].st_value = s->value;
@@ -285,7 +285,7 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
 
         symtab_shdr_idx = shdr_idx;
         data_off = ELF_ALIGN(data_off, 8);
-        write_elf_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".symtab"), SHT_SYMTAB, 0, 0, data_off, symtab_size, (uint32_t)strtab_shdr_idx, 0, 8, sizeof(Elf64_Sym));
+        write_elf_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".symtab"), SHT_SYMTAB, 0, 0, data_off, symtab_size, (uint32_t)strtab_shdr_idx, 1, 8, sizeof(Elf64_Sym));
         shdrs[shdr_idx].sh_offset = data_off;
         data_off += ELF_ALIGN(symtab_size, 8);
         shdr_idx++;
@@ -305,7 +305,8 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
 
     size_t ehdr_size = sizeof(Elf64_Ehdr);
     size_t shdr_table_size = num_sections * sizeof(Elf64_Shdr);
-    size_t data_start = ELF_ALIGN(ehdr_size + shdr_table_size, 16);
+    size_t shdr_end = ELF_ALIGN(ehdr_size + shdr_table_size, 16);
+    size_t data_start = shdr_end;
     size_t total = ELF_ALIGN(data_start + data_off + shstrtab_size, 16);
 
     uint8_t * buf = calloc(1, total);
@@ -317,17 +318,15 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
     ehdr->e_shstrndx = 1;
     ehdr->e_shoff = ehdr_size;
 
-    size_t data_off_base = data_start;
-    shdrs[1].sh_offset = data_off_base + data_off;
+    shdrs[1].sh_offset = data_start + data_off;
     sec = ctx->sections;
     for (size_t i = 0; i < num_user_secs && sec; i++) {
-        shdrs[i + 2].sh_offset = data_off_base + (shdrs[i + 2].sh_offset - (size_t)shdrs[i + 2].sh_offset);
         sec = sec->next;
     }
-    shdrs[strtab_shdr_idx].sh_offset = data_off_base + shdrs[strtab_shdr_idx].sh_offset;
-    shdrs[symtab_shdr_idx].sh_offset = data_off_base + shdrs[symtab_shdr_idx].sh_offset;
+    shdrs[strtab_shdr_idx].sh_offset = data_start + shdrs[strtab_shdr_idx].sh_offset;
+    shdrs[symtab_shdr_idx].sh_offset = data_start + shdrs[symtab_shdr_idx].sh_offset;
     if (rela && rela_count > 0)
-        shdrs[rela_shdr_idx_final].sh_offset = data_off_base + shdrs[rela_shdr_idx_final].sh_offset;
+        shdrs[rela_shdr_idx_final].sh_offset = data_start + shdrs[rela_shdr_idx_final].sh_offset;
 
     memcpy(buf + ehdr_size, shdrs, shdr_table_size);
 
@@ -352,6 +351,81 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
     free(sym_strtab);
     free(symtab);
     free(rela);
+
+    *out_data = buf;
+    *out_size = total;
+    return PULSE_SUCCESS;
+}
+
+static uint16_t elf_get_type_exec(emit_architecture_t arch) {
+    (void)arch;
+    return ET_EXEC;
+}
+
+static uint64_t elf_get_entry_exec(emit_context_t * ctx, size_t vaddr_base, size_t code_offset) {
+    if (!ctx->symbols)
+        return vaddr_base + code_offset;
+    return vaddr_base + code_offset + ctx->symbols->value;
+}
+
+pulse_status emit_write_elf_exec(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size) {
+    if (!ctx || !out_data || !out_size)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+
+    size_t code_size = 0;
+    for (emit_section_t * sec = ctx->sections; sec; sec = sec->next) {
+        code_size = ELF_ALIGN(code_size, 16);
+        code_size += sec->size;
+    }
+
+    size_t ehdr_size = sizeof(Elf64_Ehdr);
+    size_t phdr_size = sizeof(Elf64_Phdr);
+    size_t vaddr_base = 0x400000;
+    size_t code_offset = 0x1000;
+    size_t code_end = code_offset + code_size;
+    size_t total = ELF_ALIGN(code_end, 4096);
+
+    uint8_t * buf = calloc(1, total);
+    if (!buf)
+        return PULSE_ERROR_ALLOCATION_FAILED;
+
+    Elf64_Ehdr * ehdr = (Elf64_Ehdr *)buf;
+    memcpy(ehdr->e_ident, ELF_MAGIC, 4);
+    ehdr->e_ident[4] = ELFCLASS64;
+    ehdr->e_ident[5] = ELFDATA2LSB;
+    ehdr->e_ident[6] = EV_CURRENT;
+    ehdr->e_ident[7] = 0;
+    ehdr->e_type = ET_EXEC;
+    ehdr->e_machine = elf_get_machine(ctx->arch);
+    ehdr->e_version = EV_CURRENT;
+    ehdr->e_entry = elf_get_entry_exec(ctx, vaddr_base, code_offset);
+    ehdr->e_phoff = ehdr_size;
+    ehdr->e_shoff = 0;
+    ehdr->e_flags = 0;
+    ehdr->e_ehsize = (uint16_t)ehdr_size;
+    ehdr->e_phentsize = (uint16_t)phdr_size;
+    ehdr->e_phnum = 1;
+    ehdr->e_shentsize = 0;
+    ehdr->e_shnum = 0;
+    ehdr->e_shstrndx = 0;
+
+    Elf64_Phdr * phdr = (Elf64_Phdr *)(buf + ehdr_size);
+    phdr->p_type = PT_LOAD;
+    phdr->p_flags = PF_R | PF_X;
+    phdr->p_offset = 0;
+    phdr->p_vaddr = vaddr_base;
+    phdr->p_paddr = vaddr_base;
+    phdr->p_filesz = total;
+    phdr->p_memsz = total;
+    phdr->p_align = 0x1000;
+
+    size_t off = code_offset;
+    for (emit_section_t * sec = ctx->sections; sec; sec = sec->next) {
+        off = ELF_ALIGN(off, 16);
+        if (sec->size > 0)
+            memcpy(buf + off, sec->data, sec->size);
+        off += sec->size;
+    }
 
     *out_data = buf;
     *out_size = total;

@@ -20,6 +20,8 @@
 #include <string.h>
 #include <time.h>
 
+#pragma pack(push, 1)
+
 #define PE_ALIGN(x, a) (((x) + (a) - 1) & ~((a) - 1))
 
 #define IMAGE_DOS_SIGNATURE 0x5A4D
@@ -109,7 +111,7 @@ typedef struct {
     uint32_t SizeOfInitializedData;
     uint32_t SizeOfUninitializedData;
     uint32_t AddressOfEntryPoint;
-    uint64_t BaseOfCode;
+    uint32_t BaseOfCode;
     uint64_t ImageBase;
     uint32_t SectionAlignment;
     uint32_t FileAlignment;
@@ -209,7 +211,7 @@ static void write_nt_headers(uint8_t * buf,
     file_hdr->NumberOfSymbols = 0;
     file_hdr->SizeOfOptionalHeader =
         (arch == EMIT_ARCH_X86_64) ? sizeof(image_optional_header64_t) : sizeof(image_optional_header32_t);
-    file_hdr->Characteristics = 0x0102;
+    file_hdr->Characteristics = 0x0002;
 
     if (arch == EMIT_ARCH_X86_64) {
         image_optional_header64_t * opt =
@@ -237,7 +239,7 @@ static void write_nt_headers(uint8_t * buf,
             PE_ALIGN(sizeof(image_dos_header_t) + 4 + IMAGE_SIZEOF_FILE_HEADER + file_hdr->SizeOfOptionalHeader, 0x200);
         opt->CheckSum = 0;
         opt->Subsystem = 3;
-        opt->DllCharacteristics = 0x8160;
+        opt->DllCharacteristics = 0x0140;
         opt->SizeOfStackReserve = 0x100000;
         opt->SizeOfStackCommit = 0x1000;
         opt->SizeOfHeapReserve = 0x100000;
@@ -272,7 +274,7 @@ static void write_nt_headers(uint8_t * buf,
             PE_ALIGN(sizeof(image_dos_header_t) + 4 + IMAGE_SIZEOF_FILE_HEADER + file_hdr->SizeOfOptionalHeader, 0x200);
         opt->CheckSum = 0;
         opt->Subsystem = 3;
-        opt->DllCharacteristics = 0x8140;
+        opt->DllCharacteristics = 0x0140;
         opt->SizeOfStackReserve = 0x100000;
         opt->SizeOfStackCommit = 0x1000;
         opt->SizeOfHeapReserve = 0x100000;
@@ -323,9 +325,14 @@ pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * o
         return PULSE_SUCCESS;
     }
 
-    size_t header_size = sizeof(image_dos_header_t) + 4 + IMAGE_SIZEOF_FILE_HEADER +
-        ((ctx->arch == EMIT_ARCH_X86_64) ? sizeof(image_optional_header64_t) : sizeof(image_optional_header32_t)) +
-        num_sections * sizeof(image_section_header_t);
+    size_t dos_hdr_size = sizeof(image_dos_header_t);
+    size_t pe_sig_size = 4;
+    size_t file_hdr_size = IMAGE_SIZEOF_FILE_HEADER;
+    size_t opt_hdr_size =
+        (ctx->arch == EMIT_ARCH_X86_64) ? sizeof(image_optional_header64_t) : sizeof(image_optional_header32_t);
+
+    size_t header_size =
+        dos_hdr_size + pe_sig_size + file_hdr_size + opt_hdr_size + num_sections * sizeof(image_section_header_t);
     header_size = PE_ALIGN(header_size, 0x200);
 
     size_t image_size = 0x1000 + PE_ALIGN(code_size, 0x1000) + PE_ALIGN(data_size, 0x1000);
@@ -339,11 +346,13 @@ pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * o
     write_nt_headers(buf, ctx->arch, (uint32_t)image_size, (uint32_t)code_size, (uint16_t)num_sections, entry_rva);
 
     image_section_header_t * sections =
-        (image_section_header_t *)(buf + header_size - num_sections * sizeof(image_section_header_t));
+        (image_section_header_t *)(buf + dos_hdr_size + pe_sig_size + file_hdr_size + opt_hdr_size);
 
     uint32_t sec_idx = 0;
     uint32_t rva = 0x1000;
-    uint32_t file_off = (uint32_t)header_size;
+    size_t after_headers =
+        dos_hdr_size + pe_sig_size + file_hdr_size + opt_hdr_size + num_sections * sizeof(image_section_header_t);
+    uint32_t file_off = (uint32_t)PE_ALIGN(after_headers, 0x200);
 
     sec = ctx->sections;
     while (sec) {
@@ -376,3 +385,5 @@ pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * o
     *out_size = total_size;
     return PULSE_SUCCESS;
 }
+
+#pragma pack(pop)

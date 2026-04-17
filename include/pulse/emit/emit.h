@@ -35,6 +35,7 @@ typedef enum {
 typedef enum {
     EMIT_FORMAT_BINARY,
     EMIT_FORMAT_ELF,
+    EMIT_FORMAT_ELF_EXEC,
     EMIT_FORMAT_PE,
 } emit_format_t;
 

@@ -87,6 +87,30 @@ typedef struct {
     uint32_t r_type;
 } Elf64_Rela;
 
+typedef struct {
+    uint32_t p_type;
+    uint32_t p_flags;
+    uint64_t p_offset;
+    uint64_t p_vaddr;
+    uint64_t p_paddr;
+    uint64_t p_filesz;
+    uint64_t p_memsz;
+    uint64_t p_align;
+} Elf64_Phdr;
+
+#define PT_NULL 0
+#define PT_LOAD 1
+#define PT_DYNAMIC 2
+#define PT_INTERP 3
+#define PT_NOTE 4
+#define PT_SHLIB 5
+#define PT_PHDR 6
+#define PT_TLS 7
+
+#define PF_X (1 << 0)
+#define PF_W (1 << 1)
+#define PF_R (1 << 2)
+
 #define ELF_R_X86_64_NONE 0
 #define ELF_R_X86_64_64 1
 #define ELF_R_X86_64_PC32 2
