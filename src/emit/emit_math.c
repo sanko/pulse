@@ -21,6 +21,7 @@
 pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
 pulse_status emit_write_elf_exec(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
 pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
+pulse_status emit_write_pe_exec(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size, uint64_t return_value);
 
 #define EMIT_DEFAULT_SECTION_CAPACITY 4096
 #define EMIT_SECTION_GROWTH_FACTOR 2

@@ -339,8 +339,8 @@ TEST {
                 emit_emit_u8(ctx, 0xb8); emit_emit_u32(ctx, 10);
                 emit_emit_u8(ctx, 0x05); emit_emit_u32(ctx, 20);
                 emit_emit_u8(ctx, 0x69); emit_emit_u8(ctx, 0xc0); emit_emit_u32(ctx, 3);
-                emit_emit_u8(ctx, 0xb8); emit_emit_u32(ctx, 60);
                 emit_emit_u8(ctx, 0x89); emit_emit_u8(ctx, 0xc7);
+                emit_emit_u8(ctx, 0xb8); emit_emit_u32(ctx, 60);
                 emit_emit_u8(ctx, 0x0f); emit_emit_u8(ctx, 0x05);
 
                 status = emit_write_file(ctx, test_elf_exec_name);
