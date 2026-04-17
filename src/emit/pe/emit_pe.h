@@ -8,6 +8,5 @@
 #include "pulse/emit/emit.h"
 
 pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
-pulse_status emit_write_pe_exec(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size, uint64_t return_value);
 
 #endif

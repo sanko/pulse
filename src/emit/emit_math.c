@@ -21,7 +21,10 @@
 pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
 pulse_status emit_write_elf_exec(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
 pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
-pulse_status emit_write_pe_exec(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size, uint64_t return_value);
+pulse_status emit_write_pe_exec_internal(emit_context_t * ctx,
+                                         uint8_t ** out_data,
+                                         size_t * out_size,
+                                         uint64_t return_value);
 
 #define EMIT_DEFAULT_SECTION_CAPACITY 4096
 #define EMIT_SECTION_GROWTH_FACTOR 2
@@ -529,6 +532,30 @@ PULSE_API pulse_status emit_write_file(const emit_context_t * ctx, const char * 
 
     if (written != size)
         return PULSE_ERROR_GENERIC;
+
+    return PULSE_SUCCESS;
+}
+
+PULSE_API pulse_status emit_write_pe_exec(const emit_context_t * ctx, const char * filename, uint64_t return_value) {
+    if (!ctx || !filename)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+
+    emit_context_t * mutable_ctx = (emit_context_t *)ctx;
+    uint8_t * data = NULL;
+    size_t size = 0;
+
+    pulse_status status = emit_write_pe_exec_internal(mutable_ctx, &data, &size, return_value);
+    if (status != PULSE_SUCCESS)
+        return status;
+
+    if (data && size > 0) {
+        FILE * f = fopen(filename, "wb");
+        if (f) {
+            fwrite(data, 1, size, f);
+            fclose(f);
+        }
+        free(data);
+    }
 
     return PULSE_SUCCESS;
 }

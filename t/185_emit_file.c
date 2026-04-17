@@ -3,7 +3,6 @@
  * @brief Unit test for emit_write_file() - generates and runs executables.
  * @ingroup test_suite
  */
-#define DBLTAP_ENABLE
 #define DBLTAP_IMPLEMENTATION
 #include "common/compat_c23.h"
 #include "common/double_tap.h"
@@ -29,15 +28,24 @@
 #define PLATFORM_NAME "Unknown"
 #endif
 
-static const char * test_exe_name = "pulse_emit_test" EXECUTABLE_EXT;
 static const char * test_elf_rel_name = "t_pulse_emit_test.o";
 static const char * test_elf_exec_name = "t_pulse_emit_test_elf";
 
 static void cleanup_test_files(void) {
 #ifdef _WIN32
-    DeleteFileA(test_exe_name);
+    DeleteFileA("pulse_emit_test_1" EXECUTABLE_EXT);
+    DeleteFileA("pulse_emit_test_2" EXECUTABLE_EXT);
+    DeleteFileA("pulse_emit_test_3" EXECUTABLE_EXT);
+    DeleteFileA("pulse_emit_test_4" EXECUTABLE_EXT);
+    DeleteFileA("pulse_emit_test_5" EXECUTABLE_EXT);
+    DeleteFileA("test_pe_exec_0.exe");
+    DeleteFileA("test_pe_exec_42.exe");
 #else
-    unlink(test_exe_name);
+    unlink("pulse_emit_test_1" EXECUTABLE_EXT);
+    unlink("pulse_emit_test_2" EXECUTABLE_EXT);
+    unlink("pulse_emit_test_3" EXECUTABLE_EXT);
+    unlink("pulse_emit_test_4" EXECUTABLE_EXT);
+    unlink("pulse_emit_test_5" EXECUTABLE_EXT);
     unlink(test_elf_rel_name);
     unlink(test_elf_exec_name);
 #endif
@@ -67,16 +75,22 @@ static emit_context_t * create_elf_executable_context(void) {
     return ctx;
 }
 
-static int write_simple_pe_exe(uint64_t return_value) {
+static int write_simple_pe_exe(uint64_t return_value, const char * file_name) {
     emit_context_t * ctx = create_pe_context();
     if (!ctx)
         return 0;
 
     pulse_status status = emit_add_section(ctx, ".text", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_EXECUTE);
-    if (status != PULSE_SUCCESS) { emit_destroy(ctx); return 0; }
+    if (status != PULSE_SUCCESS) {
+        emit_destroy(ctx);
+        return 0;
+    }
 
     status = emit_begin_section(ctx, ".text");
-    if (status != PULSE_SUCCESS) { emit_destroy(ctx); return 0; }
+    if (status != PULSE_SUCCESS) {
+        emit_destroy(ctx);
+        return 0;
+    }
 
     emit_define_symbol(ctx, "main", EMIT_VISIBILITY_DEFAULT, true);
     emit_emit_label(ctx, "main");
@@ -84,7 +98,7 @@ static int write_simple_pe_exe(uint64_t return_value) {
     emit_math_mov_imm(ctx, EMIT_REG_RAX, return_value);
     emit_math_epilogue(ctx);
 
-    status = emit_write_file(ctx, test_exe_name);
+    status = emit_write_file(ctx, file_name);
     emit_destroy(ctx);
     return status == PULSE_SUCCESS;
 }
@@ -95,9 +109,12 @@ static int run_executable_and_check_exit_code(const char * exe_path, int expecte
     PROCESS_INFORMATION pi = {0};
     si.cb = sizeof(si);
 
+    fprintf(stderr, "    DEBUG: Trying to run %s\n", exe_path);
     BOOL result = CreateProcessA(exe_path, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    if (!result)
+    if (!result) {
+        fprintf(stderr, "    DEBUG: CreateProcess failed, error=%lu\n", GetLastError());
         return 0;
+    }
 
     WaitForSingleObject(pi.hProcess, INFINITE);
 
@@ -106,6 +123,7 @@ static int run_executable_and_check_exit_code(const char * exe_path, int expecte
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 
+    fprintf(stderr, "    DEBUG: Expected %d, got %lu\n", expected_exit_code, (unsigned long)exit_code);
     return (exit_code == (DWORD)expected_exit_code);
 #else
     char cmd[512];
@@ -116,7 +134,7 @@ static int run_executable_and_check_exit_code(const char * exe_path, int expecte
 }
 
 TEST {
-    plan(10);
+    plan(11);
 
     subtest("emit_write_file with NULL context") {
         plan(1);
@@ -140,10 +158,10 @@ TEST {
     subtest("write and verify PE file header") {
         plan(3);
 
-        if (write_simple_pe_exe(42)) {
+        if (write_simple_pe_exe(42, "pulse_emit_test_1" EXECUTABLE_EXT)) {
             ok(1, "PE file written successfully");
 
-            FILE * f = fopen(test_exe_name, "rb");
+            FILE * f = fopen("pulse_emit_test_1" EXECUTABLE_EXT, "rb");
             if (f) {
                 unsigned char header[2];
                 size_t read = fread(header, 1, 2, f);
@@ -163,10 +181,10 @@ TEST {
     subtest("write and verify PE file structure") {
         plan(4);
 
-        if (write_simple_pe_exe(0)) {
+        if (write_simple_pe_exe(0, "pulse_emit_test_2" EXECUTABLE_EXT)) {
             ok(1, "PE file written");
 
-            FILE * f = fopen(test_exe_name, "rb");
+            FILE * f = fopen("pulse_emit_test_2" EXECUTABLE_EXT, "rb");
             if (f) {
                 unsigned char buf[512];
                 size_t read = fread(buf, 1, 512, f);
@@ -175,7 +193,7 @@ TEST {
                 ok(read > 64, "PE file has content");
 
                 int lfanew = *(int *)(buf + 0x3C);
-                ok(lfanew == 0x40, "PE signature at offset 0x40");
+                ok(lfanew == 128, "PE signature at offset 128");
 
                 unsigned int pe_sig = *(unsigned int *)(buf + lfanew);
                 ok(pe_sig == 0x00004550, "Valid PE signature");
@@ -192,13 +210,61 @@ TEST {
     subtest("write PE with different return values") {
         plan(3);
 
-        ok(write_simple_pe_exe(0), "wrote PE returning 0");
-        ok(write_simple_pe_exe(42), "wrote PE returning 42");
-        ok(write_simple_pe_exe(255), "wrote PE returning 255");
+        ok(write_simple_pe_exe(0, "pulse_emit_test_3" EXECUTABLE_EXT), "wrote PE returning 0");
+        ok(write_simple_pe_exe(42, "pulse_emit_test_4" EXECUTABLE_EXT), "wrote PE returning 42");
+        ok(write_simple_pe_exe(255, "pulse_emit_test_5" EXECUTABLE_EXT), "wrote PE returning 255");
     }
+
+#ifdef _WIN32
+    subtest("execute PE executable returning 0") {
+        plan(1);
+
+        emit_context_t * ctx = NULL;
+        pulse_status status = emit_create(&ctx, EMIT_ARCH_X86_64, EMIT_FORMAT_PE);
+        if (status != PULSE_SUCCESS) {
+            fail("Failed to create context");
+        }
+        else {
+            status = emit_write_pe_exec(ctx, "test_pe_exec_0.exe", 0);
+            emit_destroy(ctx);
+            if (status == PULSE_SUCCESS)
+                ok(run_executable_and_check_exit_code("test_pe_exec_0.exe", 0), "PE returns exit code 0");
+            else
+                fail("Failed to write PE file");
+        }
+    }
+    fflush(stderr);
+    fflush(stdout);
+
+    subtest("execute PE executable returning 42") {
+        plan(1);
+
+        emit_context_t * ctx = NULL;
+        pulse_status status = emit_create(&ctx, EMIT_ARCH_X86_64, EMIT_FORMAT_PE);
+        if (status != PULSE_SUCCESS) {
+            fail("Failed to create context");
+        }
+        else {
+            status = emit_write_pe_exec(ctx, "test_pe_exec_42.exe", 42);
+            emit_destroy(ctx);
+            if (status == PULSE_SUCCESS)
+                ok(run_executable_and_check_exit_code("test_pe_exec_42.exe", 42), "PE returns exit code 42");
+            else
+                fail("Failed to write PE file");
+        }
+    }
+    fflush(stderr);
+    fflush(stdout);
+#else
+    subtest("execute PE executable (skipped on non-Windows)") {
+        plan(2);
+        skip(2, "PE execution tests only run on Windows");
+    }
+#endif
 
 #ifdef __linux__
     subtest("write ELF relocatable file") {
+        plan(3);
         plan(3);
 
         emit_context_t * ctx = create_elf_relocatable_context();
@@ -220,7 +286,9 @@ TEST {
                 else {
                     emit_define_symbol(ctx, "_start", EMIT_VISIBILITY_DEFAULT, true);
                     emit_emit_label(ctx, "_start");
-                    emit_emit_u8(ctx, 0xb8); emit_emit_u32(ctx, 42); emit_emit_u8(ctx, 0xc3);
+                    emit_emit_u8(ctx, 0xb8);
+                    emit_emit_u32(ctx, 42);
+                    emit_emit_u8(ctx, 0xc3);
 
                     status = emit_write_file(ctx, test_elf_rel_name);
                     emit_destroy(ctx);
@@ -262,9 +330,12 @@ TEST {
                 emit_begin_section(ctx, ".text");
                 emit_define_symbol(ctx, "_start", EMIT_VISIBILITY_DEFAULT, true);
                 emit_emit_label(ctx, "_start");
-                emit_emit_u8(ctx, 0xb8); emit_emit_u32(ctx, 60);
-                emit_emit_u8(ctx, 0xbf); emit_emit_u32(ctx, 42);
-                emit_emit_u8(ctx, 0x0f); emit_emit_u8(ctx, 0x05);
+                emit_emit_u8(ctx, 0xb8);
+                emit_emit_u32(ctx, 60);
+                emit_emit_u8(ctx, 0xbf);
+                emit_emit_u32(ctx, 42);
+                emit_emit_u8(ctx, 0x0f);
+                emit_emit_u8(ctx, 0x05);
 
                 status = emit_write_file(ctx, test_elf_rel_name);
             }
@@ -272,16 +343,17 @@ TEST {
 
             if (status == PULSE_SUCCESS) {
                 char cmd[256];
-                snprintf(cmd, sizeof(cmd), "ld -o %s %s -nostdlib -e _start 2>/dev/null", test_elf_exec_name, test_elf_rel_name);
+                snprintf(cmd,
+                         sizeof(cmd),
+                         "ld -o %s %s -nostdlib -e _start 2>/dev/null",
+                         test_elf_exec_name,
+                         test_elf_rel_name);
                 int link_result = system(cmd);
 
-                if (link_result == 0) {
-                    ok(run_executable_and_check_exit_code(test_elf_exec_name, 42),
-                       "Linked ELF returns exit code 42");
-                }
-                else {
+                if (link_result == 0)
+                    ok(run_executable_and_check_exit_code(test_elf_exec_name, 42), "Linked ELF returns exit code 42");
+                else
                     fail("Failed to link ELF file (exit code %d)", WEXITSTATUS(link_result));
-                }
             }
             else {
                 fail("Failed to write ELF file");
@@ -302,9 +374,12 @@ TEST {
                 emit_begin_section(ctx, ".text");
                 emit_define_symbol(ctx, "_start", EMIT_VISIBILITY_DEFAULT, true);
                 emit_emit_label(ctx, "_start");
-                emit_emit_u8(ctx, 0xb8); emit_emit_u32(ctx, 60);
-                emit_emit_u8(ctx, 0xbf); emit_emit_u32(ctx, 42);
-                emit_emit_u8(ctx, 0x0f); emit_emit_u8(ctx, 0x05);
+                emit_emit_u8(ctx, 0xb8);
+                emit_emit_u32(ctx, 60);
+                emit_emit_u8(ctx, 0xbf);
+                emit_emit_u32(ctx, 42);
+                emit_emit_u8(ctx, 0x0f);
+                emit_emit_u8(ctx, 0x05);
 
                 status = emit_write_file(ctx, test_elf_exec_name);
             }
@@ -314,8 +389,7 @@ TEST {
                 char chmod_cmd[256];
                 snprintf(chmod_cmd, sizeof(chmod_cmd), "chmod +x %s 2>/dev/null", test_elf_exec_name);
                 system(chmod_cmd);
-                ok(run_executable_and_check_exit_code(test_elf_exec_name, 42),
-                   "ELF executable returns exit code 42");
+                ok(run_executable_and_check_exit_code(test_elf_exec_name, 42), "ELF executable returns exit code 42");
             }
             else {
                 fail("Failed to write ELF executable");
@@ -336,12 +410,19 @@ TEST {
                 emit_begin_section(ctx, ".text");
                 emit_define_symbol(ctx, "_start", EMIT_VISIBILITY_DEFAULT, true);
                 emit_emit_label(ctx, "_start");
-                emit_emit_u8(ctx, 0xb8); emit_emit_u32(ctx, 10);
-                emit_emit_u8(ctx, 0x05); emit_emit_u32(ctx, 20);
-                emit_emit_u8(ctx, 0x69); emit_emit_u8(ctx, 0xc0); emit_emit_u32(ctx, 3);
-                emit_emit_u8(ctx, 0x89); emit_emit_u8(ctx, 0xc7);
-                emit_emit_u8(ctx, 0xb8); emit_emit_u32(ctx, 60);
-                emit_emit_u8(ctx, 0x0f); emit_emit_u8(ctx, 0x05);
+                emit_emit_u8(ctx, 0xb8);
+                emit_emit_u32(ctx, 10);
+                emit_emit_u8(ctx, 0x05);
+                emit_emit_u32(ctx, 20);
+                emit_emit_u8(ctx, 0x69);
+                emit_emit_u8(ctx, 0xc0);
+                emit_emit_u32(ctx, 3);
+                emit_emit_u8(ctx, 0x89);
+                emit_emit_u8(ctx, 0xc7);
+                emit_emit_u8(ctx, 0xb8);
+                emit_emit_u32(ctx, 60);
+                emit_emit_u8(ctx, 0x0f);
+                emit_emit_u8(ctx, 0x05);
 
                 status = emit_write_file(ctx, test_elf_exec_name);
             }
