@@ -7,8 +7,23 @@
  * SPDX-License-Identifier: (Artistic-2.0 OR MIT)
  */
 /**
- * @file emit.c
+ * @file emit_math.c
  * @brief Implementation of the emit API for generating machine code.
+ *
+ * This file contains the core implementation of the emit JIT code generation system.
+ * It provides:
+ * - Context lifecycle management (create/destroy)
+ * - Section management (add, begin, end)
+ * - Symbol and label management
+ * - Raw byte emission for instruction encoding
+ * - Binary serialization for output formats
+ * - Math operations for x86-64 and ARM64 architectures
+ *
+ * The emit system generates machine code that can be:
+ * - Executed directly via JIT (copy to executable memory)
+ * - Written as raw binary (for JIT use)
+ * - Written as PE executable (Windows)
+ * - Written as ELF executable (Unix)
  */
 #define PULSE_BUILDING
 #include "common/compat_c23.h"

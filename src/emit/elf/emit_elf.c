@@ -6,6 +6,20 @@
  *
  * SPDX-License-Identifier: (Artistic-2.0 OR MIT)
  */
+/**
+ * @file emit_elf.c
+ * @brief ELF (Executable and Linkable Format) binary format support.
+ *
+ * This module handles generation of ELF64 files for Unix-like systems.
+ * It produces valid ELF executables with proper headers, program headers,
+ * section headers, and symbol tables for linking and execution.
+ *
+ * Supported features:
+ * - ELF64 little-endian object files
+ * - x86-64 and ARM64 architectures
+ * - Symbol tables and string tables
+ * - Relocation entries for dynamic linking
+ */
 #define PULSE_BUILDING
 #include "emit_elf.h"
 #include "../emit_internals.h"

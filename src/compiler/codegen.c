@@ -1,6 +1,26 @@
 /**
+ * Copyright (c) 2025 Sanko Robinson
+ *
+ * This source code is dual-licensed under the Artistic License 2.0 or the MIT License.
+ * You may choose to use the code under the terms of either license.
+ *
+ * SPDX-License-Identifier: (Artistic-2.0 OR MIT)
+ */
+/**
  * @file codegen.c
- * @brief Code generator for Infix language - generates bytecode
+ * @brief Code generator for the Infix language - generates bytecode.
+ *
+ * The code generator transforms a validated Abstract Syntax Tree (AST) into
+ * bytecode instructions for the Infix Virtual Machine (VM). It handles:
+ *
+ * - **Expression compilation**: Converts AST expressions into bytecode sequences
+ * - **Control flow**: Generates jump instructions for conditionals and loops
+ * - **Function calls**: Sets up call frames and manages argument passing
+ * - **Symbol resolution**: Maps identifiers to their stack offsets or global slots
+ * - **Constant pooling**: Collects literals into a constant table for efficient loading
+ *
+ * The generator produces a stack-based bytecode instruction set, where most operations
+ * pop operands from the stack and push results back.
  */
 
 #include "common/compat_c23.h"
