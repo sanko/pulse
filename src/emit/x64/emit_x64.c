@@ -13,13 +13,6 @@
 #define PULSE_BUILDING
 #include "emit_x64.h"
 
-#define EMIT_CHECK(x)            \
-    do {                         \
-        pulse_status _s = (x);   \
-        if (_s != PULSE_SUCCESS) \
-            return _s;           \
-    } while (0)
-
 #define EMIT_REG_NEEDS_REX(reg) ((reg) >= 8)
 
 pulse_status emit_x64_rex(emit_context_t * ctx, bool w, bool r, bool x, bool b) {
@@ -213,6 +206,13 @@ pulse_status emit_x64_call(emit_context_t * ctx, const char * name) {
     EMIT_CHECK(emit_emit_u8(ctx, 0xE8));
     EMIT_CHECK(emit_emit_u32(ctx, 0));
     EMIT_CHECK(emit_add_relocation(ctx, name, call_offset + 1, 4, 5));
+    return PULSE_SUCCESS;
+}
+
+pulse_status emit_x64_call_reg(emit_context_t * ctx, emit_register_t reg) {
+    EMIT_CHECK(emit_x64_rex(ctx, false, false, false, EMIT_REG_NEEDS_REX(reg)));
+    EMIT_CHECK(emit_emit_u8(ctx, 0xFF));
+    EMIT_CHECK(emit_emit_u8(ctx, 0xD0 | (reg & 0x07)));
     return PULSE_SUCCESS;
 }
 

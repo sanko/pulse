@@ -28,18 +28,18 @@ extern "C" {
  * to the corresponding ARM64 condition codes internally.
  */
 typedef enum {
-    EMIT_CC_O,      /**< Overflow (x86) / Same as NE (ARM64) */
-    EMIT_CC_NO,     /**< No overflow (x86) / Same as EQ (ARM64) */
-    EMIT_CC_B,      /**< Below (unsigned) (x86) / CS (ARM64) */
-    EMIT_CC_AE,     /**< Above or equal (unsigned) (x86) / CC (ARM64) */
+    EMIT_CC_O,      /**< Overflow (x86) / Same as VS (ARM64) */
+    EMIT_CC_NO,     /**< No overflow (x86) / Same as VC (ARM64) */
+    EMIT_CC_B,      /**< Below (unsigned) (x86) / LO/CC (ARM64) */
+    EMIT_CC_AE,     /**< Above or equal (unsigned) (x86) / HS/CS (ARM64) */
     EMIT_CC_E,      /**< Equal (x86) / EQ (ARM64) */
     EMIT_CC_NE,     /**< Not equal (x86) / NE (ARM64) */
     EMIT_CC_BE,     /**< Below or equal (unsigned) (x86) / LS (ARM64) */
     EMIT_CC_A,      /**< Above (unsigned) (x86) / HI (ARM64) */
     EMIT_CC_S,      /**< Sign (negative) (x86) / MI (ARM64) */
     EMIT_CC_NS,     /**< No sign (non-negative) (x86) / PL (ARM64) */
-    EMIT_CC_P,      /**< Parity (x86) / VS (ARM64) */
-    EMIT_CC_NP,     /**< No parity (x86) / VC (ARM64) */
+    EMIT_CC_P,      /**< Parity (x86) / No direct match on ARM64 */
+    EMIT_CC_NP,     /**< No parity (x86) / No direct match on ARM64 */
     EMIT_CC_L,      /**< Less (signed) (x86) / LT (ARM64) */
     EMIT_CC_GE,     /**< Greater or equal (signed) (x86) / GE (ARM64) */
     EMIT_CC_LE,     /**< Less or equal (signed) (x86) / LE (ARM64) */
@@ -47,51 +47,102 @@ typedef enum {
     EMIT_CC_AL,     /**< Always (x86) / AL (ARM64) */
     EMIT_CC_NOCARE, /**< Don't care (x86) / AL (ARM64) */
 
-    EMIT_CC_CS = EMIT_CC_B,   /**< Carry set (same as B) */
-    EMIT_CC_HS = EMIT_CC_AE,  /**< Unsigned higher or same (same as AE) */
-    EMIT_CC_CC = EMIT_CC_AE,  /**< Carry clear (same as AE) */
-    EMIT_CC_LO = EMIT_CC_B,   /**< Unsigned lower (same as B) */
-    EMIT_CC_RAW = EMIT_CC_BE, /**< Raw alias */
-    EMIT_CC_NEA = EMIT_CC_A,  /**< Not below or equal (same as A) */
-
-    EMIT_CC_EQ = EMIT_CC_E, /**< Equal (ARM64 style) */
-    EMIT_CC_CS_2,           /**< Carry set (ARM64) */
-    EMIT_CC_CC_2,           /**< Carry clear (ARM64) */
-    EMIT_CC_MI,             /**< Minus/negative (ARM64) */
-    EMIT_CC_PL,             /**< Plus/positive or zero (ARM64) */
-    EMIT_CC_VS,             /**< Overflow (ARM64) */
-    EMIT_CC_VC,             /**< No overflow (ARM64) */
-    EMIT_CC_HI,             /**< Unsigned higher (ARM64) */
-    EMIT_CC_LS,             /**< Unsigned lower or same (ARM64) */
-    EMIT_CC_GE_2,           /**< Greater than or equal (ARM64) */
-    EMIT_CC_LT_2,           /**< Less than (ARM64) */
-    EMIT_CC_GT_2,           /**< Greater than (ARM64) */
-    EMIT_CC_LE_2,           /**< Less than or equal (ARM64) */
-    EMIT_CC_AL_2,           /**< Always (ARM64) */
+    /* Aliases */
+    EMIT_CC_CS = EMIT_CC_AE, /**< Carry set (ARM64) */
+    EMIT_CC_CC = EMIT_CC_B,  /**< Carry clear (ARM64) */
+    EMIT_CC_HS = EMIT_CC_AE, /**< Higher or same (ARM64) */
+    EMIT_CC_LO = EMIT_CC_B,  /**< Lower (ARM64) */
+    EMIT_CC_HI = EMIT_CC_A,  /**< Higher (ARM64) */
+    EMIT_CC_LS = EMIT_CC_BE, /**< Lower or same (ARM64) */
+    EMIT_CC_EQ = EMIT_CC_E,  /**< Equal (ARM64) */
+    EMIT_CC_MI = EMIT_CC_S,  /**< Minus (ARM64) */
+    EMIT_CC_PL = EMIT_CC_NS, /**< Plus (ARM64) */
+    EMIT_CC_VS = EMIT_CC_O,  /**< Overflow (ARM64) */
+    EMIT_CC_VC = EMIT_CC_NO, /**< No overflow (ARM64) */
+    EMIT_CC_LT = EMIT_CC_L,  /**< Less than (ARM64) */
+    EMIT_CC_GT = EMIT_CC_G,  /**< Greater than (ARM64) */
 } emit_cc_t;
 
 /**
- * @brief x86-64 general-purpose registers.
- *
- * Register numbers correspond to ModRM encoding.
+ * @brief Architecture-neutral register definitions.
  */
 typedef enum {
-    EMIT_REG_RAX = 0,  /**< Accumulator */
-    EMIT_REG_RCX = 1,  /**< Counter */
-    EMIT_REG_RDX = 2,  /**< Data */
-    EMIT_REG_RBX = 3,  /**< Base */
-    EMIT_REG_RSP = 4,  /**< Stack pointer */
-    EMIT_REG_RBP = 5,  /**< Base pointer */
-    EMIT_REG_RSI = 6,  /**< Source index */
-    EMIT_REG_RDI = 7,  /**< Destination index */
-    EMIT_REG_R8 = 8,   /**< Extended register 8 */
-    EMIT_REG_R9 = 9,   /**< Extended register 9 */
-    EMIT_REG_R10 = 10, /**< Extended register 10 */
-    EMIT_REG_R11 = 11, /**< Extended register 11 */
-    EMIT_REG_R12 = 12, /**< Extended register 12 */
-    EMIT_REG_R13 = 13, /**< Extended register 13 */
-    EMIT_REG_R14 = 14, /**< Extended register 14 */
-    EMIT_REG_R15 = 15, /**< Extended register 15 */
+    /* x86-64 General Purpose Registers (0-15) */
+    EMIT_REG_RAX = 0,
+    EMIT_REG_RCX = 1,
+    EMIT_REG_RDX = 2,
+    EMIT_REG_RBX = 3,
+    EMIT_REG_RSP = 4,
+    EMIT_REG_RBP = 5,
+    EMIT_REG_RSI = 6,
+    EMIT_REG_RDI = 7,
+    EMIT_REG_R8 = 8,
+    EMIT_REG_R9 = 9,
+    EMIT_REG_R10 = 10,
+    EMIT_REG_R11 = 11,
+    EMIT_REG_R12 = 12,
+    EMIT_REG_R13 = 13,
+    EMIT_REG_R14 = 14,
+    EMIT_REG_R15 = 15,
+
+    /* ARM64 (AArch64) General Purpose Registers (100-131) */
+    EMIT_REG_X0 = 100,
+    EMIT_REG_X1 = 101,
+    EMIT_REG_X2 = 102,
+    EMIT_REG_X3 = 103,
+    EMIT_REG_X4 = 104,
+    EMIT_REG_X5 = 105,
+    EMIT_REG_X6 = 106,
+    EMIT_REG_X7 = 107,
+    EMIT_REG_X8 = 108,
+    EMIT_REG_X9 = 109,
+    EMIT_REG_X10 = 110,
+    EMIT_REG_X11 = 111,
+    EMIT_REG_X12 = 112,
+    EMIT_REG_X13 = 113,
+    EMIT_REG_X14 = 114,
+    EMIT_REG_X15 = 115,
+    EMIT_REG_X16 = 116,
+    EMIT_REG_X17 = 117,
+    EMIT_REG_X18 = 118,
+    EMIT_REG_X19 = 119,
+    EMIT_REG_X20 = 120,
+    EMIT_REG_X21 = 121,
+    EMIT_REG_X22 = 122,
+    EMIT_REG_X23 = 123,
+    EMIT_REG_X24 = 124,
+    EMIT_REG_X25 = 125,
+    EMIT_REG_X26 = 126,
+    EMIT_REG_X27 = 127,
+    EMIT_REG_X28 = 128,
+    EMIT_REG_X29 = 129, /**< Frame pointer */
+    EMIT_REG_X30 = 130, /**< Link register */
+    EMIT_REG_XSP = 131, /**< Stack pointer */
+    EMIT_REG_XZR = 132, /**< Zero register */
+
+    /* x86-64 SSE Registers (200-215) */
+    EMIT_REG_XMM0 = 200,
+    EMIT_REG_XMM1 = 201,
+    EMIT_REG_XMM2 = 202,
+    EMIT_REG_XMM3 = 203,
+    EMIT_REG_XMM4 = 204,
+    EMIT_REG_XMM5 = 205,
+    EMIT_REG_XMM6 = 206,
+    EMIT_REG_XMM7 = 207,
+    EMIT_REG_XMM8 = 208,
+    EMIT_REG_XMM9 = 209,
+    EMIT_REG_XMM10 = 210,
+    EMIT_REG_XMM11 = 211,
+    EMIT_REG_XMM12 = 212,
+    EMIT_REG_XMM13 = 213,
+    EMIT_REG_XMM14 = 214,
+    EMIT_REG_XMM15 = 215,
+
+    /* ARM64 NEON/FP Registers (300-331) */
+    EMIT_REG_Q0 = 300,
+    EMIT_REG_Q1 = 301,
+    EMIT_REG_Q2 = 302,
+    EMIT_REG_Q3 = 303,
 } emit_register_t;
 
 /**
@@ -416,6 +467,14 @@ PULSE_API pulse_status emit_math_load_sym(emit_context_t * ctx, emit_register_t 
  * @return PULSE_SUCCESS on success.
  */
 PULSE_API pulse_status emit_math_store_sym(emit_context_t * ctx, const char * sym, emit_register_t src);
+
+/**
+ * @brief Emits a call to a register.
+ * @param[in] ctx The emit context.
+ * @param[in] reg Register containing the address to call.
+ * @return PULSE_SUCCESS on success.
+ */
+PULSE_API pulse_status emit_math_call_reg(emit_context_t * ctx, emit_register_t reg);
 
 #ifdef __cplusplus
 }

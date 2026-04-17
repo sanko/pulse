@@ -47,16 +47,26 @@ static void cleanup_test_files(void) {
 
 static emit_context_t * create_pe_context(void) {
     emit_context_t * ctx = NULL;
+#if defined(PULSE_ARCH_X64)
     if (emit_create(&ctx, EMIT_ARCH_X86_64, EMIT_FORMAT_PE) != PULSE_SUCCESS)
         return NULL;
+#elif defined(PULSE_ARCH_ARM64)
+    if (emit_create(&ctx, EMIT_ARCH_AARCH64, EMIT_FORMAT_PE) != PULSE_SUCCESS)
+        return NULL;
+#endif
     return ctx;
 }
 
 #ifdef __linux__
 static emit_context_t * create_elf_relocatable_context(void) {
     emit_context_t * ctx = NULL;
+#if defined(PULSE_ARCH_X64)
     if (emit_create(&ctx, EMIT_ARCH_X86_64, EMIT_FORMAT_ELF) != PULSE_SUCCESS)
         return NULL;
+#elif defined(PULSE_ARCH_ARM64)
+    if (emit_create(&ctx, EMIT_ARCH_AARCH64, EMIT_FORMAT_ELF) != PULSE_SUCCESS)
+        return NULL;
+#endif
     return ctx;
 }
 #endif
@@ -70,7 +80,11 @@ static int write_simple_pe_exe(uint64_t return_value, const char * file_name) {
     emit_define_symbol(ctx, "main", EMIT_VISIBILITY_DEFAULT, true);
     emit_emit_label(ctx, "main");
     emit_math_prologue(ctx);
+#if defined(PULSE_ARCH_X64)
     emit_math_mov_imm(ctx, EMIT_REG_RAX, return_value);
+#elif defined(PULSE_ARCH_ARM64)
+    emit_math_mov_imm(ctx, EMIT_REG_X0, return_value);
+#endif
     emit_math_epilogue(ctx);
     pulse_status status = emit_write_file(ctx, file_name);
     emit_destroy(ctx);

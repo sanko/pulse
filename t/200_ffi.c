@@ -84,9 +84,8 @@ TEST {
     emit_get_offset(ctx, &data_sz);
     setup_test_section(ctx);
 
-    emit_math_load_sym(ctx, EMIT_REG_RAX, "ffi_target");
-    emit_emit_u8(ctx, 0xFF);
-    emit_emit_u8(ctx, 0xD0); /* CALL RAX */
+    emit_math_load_sym(ctx, REG_RET, "ffi_target");
+    emit_math_call_reg(ctx, REG_RET);
     emit_math_ret(ctx);
 
     const uint8_t * code;

@@ -18,10 +18,36 @@
 #define INFIX_EMIT_INTERNALS_H
 
 #include "pulse/emit/emit.h"
+#include "pulse/emit/emit_math.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+static inline uint8_t _emit_x64_reg(emit_register_t reg) {
+    if (reg >= 0 && reg <= 15) return (uint8_t)reg;
+    if (reg >= 200 && reg <= 215) return (uint8_t)(reg - 200);
+    return 0; // Fallback
+}
+
+static inline bool _emit_x64_reg_needs_rex(emit_register_t reg) {
+    if (reg >= 8 && reg <= 15) return true;
+    if (reg >= 208 && reg <= 215) return true;
+    return false;
+}
+
+static inline uint8_t _emit_arm64_reg(emit_register_t reg) {
+    if (reg >= 100 && reg <= 131) return (uint8_t)(reg - 100);
+    if (reg == 132) return 31; // XZR
+    return (uint8_t)(reg & 0x1F);
+}
+
+#define EMIT_CHECK(x)            \
+    do {                         \
+        pulse_status _s = (x);   \
+        if (_s != PULSE_SUCCESS) \
+            return _s;           \
+    } while (0)
 
 /**
  * @brief Represents a section in the output binary.

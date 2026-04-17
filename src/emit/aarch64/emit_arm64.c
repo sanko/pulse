@@ -28,13 +28,6 @@
 pulse_status emit_add_relocation(
     emit_context_t * ctx, const char * name, uint64_t offset, uint8_t size, uint8_t inst_size);
 
-#define EMIT_CHECK(x)            \
-    do {                         \
-        pulse_status _s = (x);   \
-        if (_s != PULSE_SUCCESS) \
-            return _s;           \
-    } while (0)
-
 #define ARM64_COND_EQ 0x0
 #define ARM64_COND_NE 0x1
 #define ARM64_COND_CS 0x2
@@ -136,6 +129,15 @@ pulse_status emit_arm64_adds(emit_context_t * ctx, emit_register_t dest, emit_re
 
 pulse_status emit_arm64_add_imm(emit_context_t * ctx, emit_register_t dest, emit_register_t src, int16_t imm) {
     uint32_t instr = 0x91000000;
+    instr |= (dest & 0x1F) << 0;
+    instr |= (src & 0x1F) << 5;
+    uint16_t imm12 = (imm >= 0) ? (imm & 0xFFF) : ((~(-imm) + 1) & 0xFFF);
+    instr |= imm12 << 10;
+    return emit_emit_u32(ctx, instr);
+}
+
+pulse_status emit_arm64_sub_imm(emit_context_t * ctx, emit_register_t dest, emit_register_t src, int16_t imm) {
+    uint32_t instr = 0xD1000000;
     instr |= (dest & 0x1F) << 0;
     instr |= (src & 0x1F) << 5;
     uint16_t imm12 = (imm >= 0) ? (imm & 0xFFF) : ((~(-imm) + 1) & 0xFFF);

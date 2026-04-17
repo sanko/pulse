@@ -9,7 +9,23 @@
 #include <stdint.h>
 #include <string.h>
 
+/* Architecture detection */
+#if defined(__x86_64__) || defined(_M_X64)
+#define PULSE_ARCH_X64 1
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#define PULSE_ARCH_ARM64 1
+#endif
+
+/* Platform detection */
 #if defined(_WIN32) || defined(__CYGWIN__)
+#define PULSE_PLATFORM_WINDOWS 1
+#elif defined(__linux__)
+#define PULSE_PLATFORM_LINUX 1
+#elif defined(__APPLE__) && defined(__MACH__)
+#define PULSE_PLATFORM_MACOS 1
+#endif
+
+#if defined(PULSE_PLATFORM_WINDOWS)
 #define PULSE_API __declspec(dllexport)
 #else
 #define PULSE_API __attribute__((visibility("default")))

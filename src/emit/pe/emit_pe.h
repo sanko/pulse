@@ -31,4 +31,17 @@
  */
 pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
 
+/**
+ * @brief Internal helper to write a PE executable.
+ * @param[in] ctx The emit context.
+ * @param[out] out_data Pointer to receive allocated output buffer.
+ * @param[out] out_size Pointer to receive output size.
+ * @param[in] return_value Value for ExitProcess.
+ * @return PULSE_SUCCESS on success.
+ */
+pulse_status emit_write_pe_exec_internal(emit_context_t * ctx,
+                                         uint8_t ** out_data,
+                                         size_t * out_size,
+                                         uint64_t return_value);
+
 #endif

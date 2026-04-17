@@ -22,6 +22,8 @@
 #include "pulse/emit/emit.h"
 #include "pulse/emit/emit_math.h"
 
+#define EMIT_REG_NEEDS_REX(reg) ((reg) >= 8)
+
 /**
  * @brief Emits a REX prefix byte for x86-64 instructions.
  * @param[in] ctx The emit context.
@@ -235,6 +237,14 @@ pulse_status emit_x64_jmp_cc(emit_context_t * ctx, emit_cc_t cc, const char * la
  * @return PULSE_SUCCESS on success.
  */
 pulse_status emit_x64_call(emit_context_t * ctx, const char * name);
+
+/**
+ * @brief Emits CALL r64 (FF /2).
+ * @param[in] ctx The emit context.
+ * @param[in] reg Register to call.
+ * @return PULSE_SUCCESS on success.
+ */
+pulse_status emit_x64_call_reg(emit_context_t * ctx, emit_register_t reg);
 
 /**
  * @brief Emits PUSH r64 (50+rd).

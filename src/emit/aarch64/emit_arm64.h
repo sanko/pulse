@@ -335,6 +335,16 @@ pulse_status emit_arm64_mov_reg(emit_context_t * ctx, emit_register_t dest, emit
 pulse_status emit_arm64_add_imm(emit_context_t * ctx, emit_register_t dest, emit_register_t src, int16_t imm);
 
 /**
+ * @brief Emits SUB Xd, Xn, #imm (sub immediate).
+ * @param[in] ctx The emit context.
+ * @param[in] dest Destination register.
+ * @param[in] src Source register.
+ * @param[in] imm Immediate value.
+ * @return PULSE_SUCCESS on success.
+ */
+pulse_status emit_arm64_sub_imm(emit_context_t * ctx, emit_register_t dest, emit_register_t src, int16_t imm);
+
+/**
  * @brief Emits LDRB Wd, [Xn, #offset] (load byte).
  * @param[in] ctx The emit context.
  * @param[in] dest Destination register.

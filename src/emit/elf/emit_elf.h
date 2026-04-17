@@ -205,4 +205,24 @@ typedef struct {
 /** @brief ARM64 relocation: PLT entry */
 #define ELF_R_AARCH64_JUMP_SLOT 512
 
+#include "../emit_internals.h"
+
+/**
+ * @brief Writes ELF object file to a buffer.
+ * @param[in] ctx The emit context.
+ * @param[out] out_data Pointer to the allocated buffer.
+ * @param[out] out_size Pointer to the buffer size.
+ * @return PULSE_SUCCESS on success.
+ */
+pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
+
+/**
+ * @brief Writes ELF executable to a buffer.
+ * @param[in] ctx The emit context.
+ * @param[out] out_data Pointer to the allocated buffer.
+ * @param[out] out_size Pointer to the buffer size.
+ * @return PULSE_SUCCESS on success.
+ */
+pulse_status emit_write_elf_exec(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
+
 #endif

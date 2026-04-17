@@ -206,13 +206,13 @@ static void write_section_header(image_section_header_t * sec,
 }
 
 static uint8_t * build_code_with_exitcall(
-    uint64_t return_value, int is_x64, uint32_t exitprocess_iat_rva, uint32_t text_rva, size_t * out_size) {
-    size_t size = is_x64 ? 32 : 16;
+    uint64_t return_value, int arch, uint32_t exitprocess_iat_rva, uint32_t text_rva, size_t * out_size) {
+    size_t size = 64; // Safe buffer
     uint8_t * buf = (uint8_t *)calloc(1, size);
     if (!buf)
         return NULL;
     size_t pos = 0;
-    if (is_x64) {
+    if (arch == EMIT_ARCH_X86_64) {
         buf[pos++] = 0x48;
         buf[pos++] = 0x83;
         buf[pos++] = 0xEC;
@@ -227,6 +227,26 @@ static uint8_t * build_code_with_exitcall(
         *(uint32_t *)(buf + pos) = (uint32_t)(exitprocess_iat_rva - rip);
         pos += 4;
         buf[pos++] = 0xC3;
+    }
+    else if (arch == EMIT_ARCH_AARCH64) {
+        /* mov x0, #return_value (limited to 16-bit for simplicity in this stub) */
+        uint32_t mov_x0 = 0xD2800000 | ((return_value & 0xFFFF) << 5) | 0;
+        *(uint32_t *)(buf + pos) = mov_x0;
+        pos += 4;
+        /* adrp x8, exitprocess_iat_rva */
+        uint32_t adrp = 0x90000008;
+        int64_t diff = (int64_t)exitprocess_iat_rva - (int64_t)text_rva;
+        int64_t pagediff = (diff >> 12);
+        adrp |= ((pagediff & 0x3) << 29) | ((pagediff & 0x1FFFFC) << 3);
+        *(uint32_t *)(buf + pos) = adrp;
+        pos += 4;
+        /* ldr x8, [x8, #:lo12:exitprocess_iat_rva] */
+        uint32_t ldr = 0xF9400108 | ((exitprocess_iat_rva & 0xFFF) >> 3) << 10;
+        *(uint32_t *)(buf + pos) = ldr;
+        pos += 4;
+        /* blr x8 */
+        *(uint32_t *)(buf + pos) = 0xD63F0100;
+        pos += 4;
     }
     else {
         buf[pos++] = 0x68;  // push imm32
@@ -367,7 +387,7 @@ pulse_status emit_write_pe_exec_internal(emit_context_t * ctx,
     uint32_t text_rva = 0x1000;
     uint32_t rdata_rva = 0x2000;
     size_t stub_size;
-    uint8_t * stub = build_code_with_exitcall(return_value, is_x64, rdata_rva + 56, text_rva, &stub_size);
+    uint8_t * stub = build_code_with_exitcall(return_value, ctx->arch, rdata_rva + 56, text_rva, &stub_size);
     if (!stub)
         return PULSE_ERROR_ALLOCATION_FAILED;
     size_t total_size = header_size + 0x200 + 0x200;
