@@ -32,6 +32,10 @@ This guide provides practical, real-world examples to help you solve common task
    + [Recipe: The Finally Block](#recipe-the-finally-block)
 * [Chapter 8: Namespaces](#chapter-8-namespaces)
    + [Recipe: Organizing Code with Namespaces](#recipe-organizing-code-with-namespaces)
+* [Chapter 9: Code Generation (Emit)](#chapter-9-code-generation-emit)
+   + [Recipe: Generating Machine Code](#recipe-generating-machine-code)
+   + [Recipe: Writing an Executable to Disk](#recipe-writing-an-executable-to-disk)
+   + [Recipe: JIT Compilation](#recipe-jit-compilation)
 
 ---
 
@@ -48,16 +52,17 @@ This guide provides practical, real-world examples to help you solve common task
 #include <stdio.h>
 
 int main() {
-    infix_compiler_t* compiler = infix_compiler_create();
-    
+    pulse_compiler_t* compiler = pulse_compiler_create();
+
     const char* source = "print(\"Hello, World!\");";
-    
-    if (infix_compile(compiler, source)) {
-        vm_object_t* result = infix_run(compiler);
+
+    if (pulse_compile(compiler, source)) {
+        pulse_vm_t* vm = pulse_vm_create(compiler);
+        pulse_vm_run(vm);
         // Program executed successfully
     }
-    
-    infix_compiler_destroy(compiler);
+
+    pulse_compiler_destroy(compiler);
     return 0;
 }
 ```
@@ -74,17 +79,18 @@ int main() {
 #include <stdlib.h>
 
 int run_script(const char* script) {
-    infix_compiler_t* compiler = infix_compiler_create();
-    
-    if (!infix_compile(compiler, script)) {
-        fprintf(stderr, "Compilation error: %s\n", compiler->errors);
-        infix_compiler_destroy(compiler);
+    pulse_compiler_t* compiler = pulse_compiler_create();
+
+    if (!pulse_compile(compiler, script)) {
+        fprintf(stderr, "Compilation error: %s\n", pulse_get_error(compiler));
+        pulse_compiler_destroy(compiler);
         return 1;
     }
-    
-    vm_object_t* result = infix_run(compiler);
-    
-    infix_compiler_destroy(compiler);
+
+    pulse_vm_t* vm = pulse_vm_create(compiler);
+    pulse_vm_run(vm);
+
+    pulse_compiler_destroy(compiler);
     return 0;
 }
 
@@ -587,3 +593,214 @@ print(Math.add(3, 4));                    // 7
 print(String.reverse("hello"));           // olleh
 print(String.is_palindrome("radar"));     // true
 ```
+
+---
+
+## Chapter 9: Code Generation (Emit)
+
+The `emit` library provides low-level JIT code generation for x86-64 and ARM64 architectures. You can generate machine code at runtime, write it to disk as an executable, or execute it directly via JIT.
+
+### Recipe: Generating Machine Code
+
+**Problem**: You need to generate x86-64 machine code programmatically.
+
+**Solution**: Use the emit API to create sections, emit instructions, and retrieve the binary.
+
+```c
+#include <pulse/emit/emit.h>
+#include <pulse/emit/emit_math.h>
+#include <stdio.h>
+
+int main() {
+    emit_context_t* ctx = NULL;
+
+    // Create context for x86-64, binary format
+    pulse_status status = emit_create(&ctx, EMIT_ARCH_X86_64, EMIT_FORMAT_BINARY);
+    if (status != PULSE_SUCCESS) {
+        fprintf(stderr, "Failed to create context\n");
+        return 1;
+    }
+
+    // Add a code section
+    emit_add_section(ctx, ".text", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_EXECUTE);
+    emit_begin_section(ctx, ".text");
+
+    // Define and emit a function that returns 42
+    emit_define_symbol(ctx, "get_answer", EMIT_VISIBILITY_DEFAULT, true);
+    emit_emit_label(ctx, "get_answer");
+
+    emit_math_mov_imm(ctx, EMIT_REG_RAX, 42);  // mov rax, 42
+    emit_math_ret(ctx);                          // ret
+
+    // Get the generated binary
+    const uint8_t* binary = NULL;
+    size_t size = 0;
+    emit_get_binary(ctx, &binary, &size);
+
+    printf("Generated %zu bytes of machine code\n", size);
+
+    // The binary contains: B8 2A 00 00 00 C3 (mov rax, 42; ret)
+
+    emit_destroy(ctx);
+    return 0;
+}
+```
+
+### Recipe: Writing an Executable to Disk
+
+**Problem**: You want to generate an actual PE/ELF executable file that can be run.
+
+**Solution**: Use `EMIT_FORMAT_PE` on Windows or `EMIT_FORMAT_ELF` on Linux, then write to disk.
+
+```c
+#include <pulse/emit/emit.h>
+#include <pulse/emit/emit_math.h>
+#include <stdio.h>
+
+int main() {
+    emit_context_t* ctx = NULL;
+
+    // Create context for PE format (Windows executable)
+    pulse_status status = emit_create(&ctx, EMIT_ARCH_X86_64, EMIT_FORMAT_PE);
+    if (status != PULSE_SUCCESS) {
+        fprintf(stderr, "Failed to create context\n");
+        return 1;
+    }
+
+    // Create code section
+    emit_add_section(ctx, ".text", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_EXECUTE);
+    emit_begin_section(ctx, ".text");
+
+    // Function: int add(int a, int b) { return a + b; }
+    emit_define_symbol(ctx, "add", EMIT_VISIBILITY_DEFAULT, true);
+    emit_emit_label(ctx, "add");
+
+    // Prologue: push rbp; mov rbp, rsp
+    emit_math_prologue(ctx);
+
+    // Result in RAX = RCX + RDX (first two args in Windows x64 ABI)
+    emit_math_add(ctx, EMIT_REG_RAX, EMIT_REG_RDX);
+
+    // Epilogue: leave; ret
+    emit_math_epilogue(ctx);
+
+    // Write directly to file
+    status = emit_write_file(ctx, "add.exe");
+    if (status == PULSE_SUCCESS) {
+        printf("Written executable: add.exe\n");
+    }
+
+    emit_destroy(ctx);
+    return 0;
+}
+```
+
+On Windows, this generates a valid PE32+ executable. On Linux, use `EMIT_FORMAT_ELF` to generate an ELF binary.
+
+### Recipe: JIT Compilation
+
+**Problem**: You want to compile and immediately execute code at runtime.
+
+**Solution**: Generate machine code, copy it to executable memory, and call it as a function pointer.
+
+```c
+#include <pulse/emit/emit.h>
+#include <pulse/emit/emit_math.h>
+#include <stdio.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/mman.h>
+#endif
+
+typedef uint64_t (*fn_ptr)(void);
+
+void* alloc_executable(size_t size) {
+#ifdef _WIN32
+    return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+#else
+    return mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC,
+                MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+#endif
+}
+
+void free_executable(void* mem, size_t size) {
+#ifdef _WIN32
+    VirtualFree(mem, 0, MEM_RELEASE);
+#else
+    munmap(mem, size);
+#endif
+}
+
+int main() {
+    emit_context_t* ctx = NULL;
+    emit_create(&ctx, EMIT_ARCH_X86_64, EMIT_FORMAT_BINARY);
+
+    emit_add_section(ctx, ".text", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_EXECUTE);
+    emit_begin_section(ctx, ".text");
+
+    // Generate: int factorial(int n) { return n <= 1 ? 1 : n * factorial(n-1); }
+    emit_define_symbol(ctx, "factorial", EMIT_VISIBILITY_DEFAULT, true);
+    emit_emit_label(ctx, "factorial");
+
+    // RAX = n (argument)
+    // Compare n <= 1
+    emit_math_cmp_imm(ctx, EMIT_REG_RAX, 1);
+    emit_math_jmp_cc(ctx, EMIT_CC_LE, "base_case");  // jle base_case
+
+    // Recursive case: n * factorial(n - 1)
+    // Save n
+    emit_math_push(ctx, EMIT_REG_RAX);
+
+    // n - 1
+    emit_math_sub_imm(ctx, EMIT_REG_RAX, 1);
+
+    // Recursive call (simplified - just returns 1 for demo)
+    emit_math_mov_imm(ctx, EMIT_REG_RAX, 1);
+
+    emit_math_pop(ctx, EMIT_REG_RCX);  // restore n
+    emit_math_mul(ctx, EMIT_REG_RCX);  // n * result
+    emit_math_ret(ctx);
+
+    // Base case: return 1
+    emit_emit_label(ctx, "base_case");
+    emit_math_mov_imm(ctx, EMIT_REG_RAX, 1);
+    emit_math_ret(ctx);
+
+    // Get binary
+    const uint8_t* binary = NULL;
+    size_t size = 0;
+    emit_get_binary(ctx, &binary, &size);
+
+    // Copy to executable memory
+    void* exec = alloc_executable(size);
+    memcpy(exec, binary, size);
+
+    // Execute!
+    fn_ptr factorial = (fn_ptr)exec;
+    printf("factorial(5) = %llu\n", (unsigned long long)factorial(5));
+
+    // Cleanup
+    free_executable(exec, size);
+    emit_destroy(ctx);
+    return 0;
+}
+```
+
+### Architecture Support
+
+The emit library supports multiple architectures:
+
+| Architecture | Constant | Notes |
+|-------------|----------|-------|
+| x86-64 | `EMIT_ARCH_X86_64` | Windows x64, Linux x86-64 |
+| ARM64 | `EMIT_ARCH_AARCH64` | ARMv8-A (Raspberry Pi 4, Apple Silicon) |
+
+### Output Formats
+
+| Format | Constant | Output |
+|--------|----------|--------|
+| Binary | `EMIT_FORMAT_BINARY` | Raw machine code only |
+| PE | `EMIT_FORMAT_PE` | Windows PE32/PE32+ executable |
+| ELF | `EMIT_FORMAT_ELF` | Linux ELF64 relocatable |

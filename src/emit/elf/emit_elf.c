@@ -301,12 +301,12 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
     }
 
     shdr_idx = 1;
-    data_off = ELF_ALIGN(data_off, 1);
-    write_elf_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".shstrtab"), SHT_STRTAB, 0, 0, data_off, shstrtab_size, 0, 0, 1, 0);
-    shdrs[shdr_idx].sh_offset = data_off;
+    write_elf_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".shstrtab"), SHT_STRTAB, 0, 0, 0, shstrtab_size, 0, 0, 1, 0);
 
-    size_t sh_off = ELF_ALIGN(data_off + shstrtab_size, 8);
-    size_t total = ELF_ALIGN(sh_off + num_sections * sizeof(Elf64_Shdr), 16);
+    size_t ehdr_size = sizeof(Elf64_Ehdr);
+    size_t shdr_table_size = num_sections * sizeof(Elf64_Shdr);
+    size_t data_start = ELF_ALIGN(ehdr_size + shdr_table_size, 16);
+    size_t total = ELF_ALIGN(data_start + data_off + shstrtab_size, 16);
 
     uint8_t * buf = calloc(1, total);
     if (!buf) { free(shdrs); free(shstrtab); free(sym_strtab); free(symtab); free(rela); return PULSE_ERROR_ALLOCATION_FAILED; }
@@ -315,6 +315,21 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
 
     Elf64_Ehdr * ehdr = (Elf64_Ehdr *)buf;
     ehdr->e_shstrndx = 1;
+    ehdr->e_shoff = ehdr_size;
+
+    size_t data_off_base = data_start;
+    shdrs[1].sh_offset = data_off_base + data_off;
+    sec = ctx->sections;
+    for (size_t i = 0; i < num_user_secs && sec; i++) {
+        shdrs[i + 2].sh_offset = data_off_base + (shdrs[i + 2].sh_offset - (size_t)shdrs[i + 2].sh_offset);
+        sec = sec->next;
+    }
+    shdrs[strtab_shdr_idx].sh_offset = data_off_base + shdrs[strtab_shdr_idx].sh_offset;
+    shdrs[symtab_shdr_idx].sh_offset = data_off_base + shdrs[symtab_shdr_idx].sh_offset;
+    if (rela && rela_count > 0)
+        shdrs[rela_shdr_idx_final].sh_offset = data_off_base + shdrs[rela_shdr_idx_final].sh_offset;
+
+    memcpy(buf + ehdr_size, shdrs, shdr_table_size);
 
     sec = ctx->sections;
     for (size_t i = 0; i < num_user_secs && sec; i++) {
@@ -324,22 +339,13 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
         sec = sec->next;
     }
 
-    size_t off = shdrs[strtab_shdr_idx].sh_offset;
-    memcpy(buf + off, sym_strtab, sym_strtab_size);
+    memcpy(buf + shdrs[strtab_shdr_idx].sh_offset, sym_strtab, sym_strtab_size);
+    memcpy(buf + shdrs[symtab_shdr_idx].sh_offset, symtab, symtab_size);
 
-    off = shdrs[symtab_shdr_idx].sh_offset;
-    memcpy(buf + off, symtab, symtab_size);
+    if (rela && rela_count > 0)
+        memcpy(buf + shdrs[rela_shdr_idx_final].sh_offset, rela, rela_size);
 
-    if (rela && rela_count > 0) {
-        off = shdrs[rela_shdr_idx_final].sh_offset;
-        memcpy(buf + off, rela, rela_size);
-    }
-
-    off = shdrs[1].sh_offset;
-    memcpy(buf + off, shstrtab, shstrtab_size);
-
-    memcpy(buf + sh_off, shdrs, num_sections * sizeof(Elf64_Shdr));
-    ehdr->e_shoff = sh_off;
+    memcpy(buf + shdrs[1].sh_offset, shstrtab, shstrtab_size);
 
     free(shdrs);
     free(shstrtab);

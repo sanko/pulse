@@ -32,18 +32,19 @@ It's designed to be the simplest way to add a dynamic scripting language to your
 #include <pulse/pulse.h>
 
 int main() {
-    infix_compiler_t* compiler = infix_compiler_create();
-    
+    pulse_compiler_t* compiler = pulse_compiler_create();
+
     const char* source = "fn main() { print(\"Hello, World!\"); }";
-    
-    if (infix_compile(compiler, source)) {
-        vm_object_t* result = infix_run(compiler);
+
+    if (pulse_compile(compiler, source)) {
+        pulse_vm_t* vm = pulse_vm_create(compiler);
+        pulse_vm_run(vm);
         // Handle result
     } else {
-        printf("Compilation error: %s\n", compiler->errors);
+        printf("Compilation error: %s\n", pulse_get_error(compiler));
     }
-    
-    infix_compiler_destroy(compiler);
+
+    pulse_compiler_destroy(compiler);
     return 0;
 }
 ```
