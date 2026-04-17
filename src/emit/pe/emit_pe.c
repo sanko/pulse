@@ -165,7 +165,18 @@ static uint16_t pe_get_machine(emit_architecture_t arch) {
     }
 }
 
-static void write_dos_header(uint8_t * buf) {
+static void write_dos_stub(uint8_t * buf) {
+    uint8_t * dos_stub = buf + 0x40;
+
+    dos_stub[0] = 0x0E; /* push cs */
+    dos_stub[1] = 0x1F; /* pop ds */
+    dos_stub[2] = 0xB8; /* mov ax, ... */
+    dos_stub[3] = 0x01; /* 0x4C01 = exit with code 1 */
+    dos_stub[4] = 0x4C;
+    dos_stub[5] = 0xCD; /* int 0x21 */
+
+    strcpy((char *)(dos_stub + 6), "This program cannot be run in DOS mode.\r\r\n$");
+
     image_dos_header_t * hdr = (image_dos_header_t *)buf;
     hdr->e_magic = IMAGE_DOS_SIGNATURE;
     hdr->e_cblp = 0x90;
@@ -324,7 +335,7 @@ pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * o
     if (!buf)
         return PULSE_ERROR_ALLOCATION_FAILED;
 
-    write_dos_header(buf);
+    write_dos_stub(buf);
     write_nt_headers(buf, ctx->arch, (uint32_t)image_size, (uint32_t)code_size, (uint16_t)num_sections, entry_rva);
 
     image_section_header_t * sections =

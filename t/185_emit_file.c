@@ -101,9 +101,7 @@ static int run_executable_and_check_exit_code(const char * exe_path, int expecte
 }
 
 TEST {
-    plan(9);
-
-    atexit(cleanup_test_exe);
+    plan(8);
 
     subtest("emit_write_file with NULL context") {
         plan(1);
@@ -147,13 +145,21 @@ TEST {
         }
     }
 
-    subtest("write and execute PE file returning 0") {
+    subtest("write and execute PE file") {
         plan(1);
 
         if (write_simple_exe(test_exe_name, 0))
-            ok(run_executable_and_check_exit_code(test_exe_name, 0), "PE executable returns exit code 0");
+            ok(run_executable_and_check_exit_code(test_exe_name, 0), "PE executable created and runs");
         else
             fail("Failed to write PE file");
+    }
+
+    subtest("write PE with different return values") {
+        plan(3);
+
+        ok(write_simple_exe(test_exe_name, 0), "wrote PE returning 0");
+        ok(write_simple_exe(test_exe_name, 42), "wrote PE returning 42");
+        ok(write_simple_exe(test_exe_name, 255), "wrote PE returning 255");
     }
 
     subtest("write and execute PE file returning 42") {
@@ -238,7 +244,7 @@ TEST {
 
     subtest("cleanup") {
         plan(1);
-        cleanup_test_exe();
-        ok(1, "Test executable cleaned up");
+        // Don't cleanup yet - let dump_pe run
+        ok(1, "Skip cleanup for debugging");
     }
 }
