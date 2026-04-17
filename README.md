@@ -32,19 +32,18 @@ It's designed to be the simplest way to add a dynamic scripting language to your
 #include <pulse/pulse.h>
 
 int main() {
-    pulse_compiler_t* compiler = pulse_compiler_create();
+    infix_compiler_t* compiler = infix_compiler_create();
 
     const char* source = "fn main() { print(\"Hello, World!\"); }";
 
-    if (pulse_compile(compiler, source)) {
-        pulse_vm_t* vm = pulse_vm_create(compiler);
-        pulse_vm_run(vm);
+    if (infix_compile(compiler, source)) {
+        vm_object_t* result = infix_run(compiler);
         // Handle result
     } else {
-        printf("Compilation error: %s\n", pulse_get_error(compiler));
+        printf("Compilation error: %s\n", parser_get_error(compiler->parser));
     }
 
-    pulse_compiler_destroy(compiler);
+    infix_compiler_destroy(compiler);
     return 0;
 }
 ```
@@ -75,7 +74,7 @@ class Point {
         this.x = x;
         this.y = y;
     }
-    
+
     distance_to(other) {
         var dx = this.x - other.x;
         var dy = this.y - other.y;
@@ -176,8 +175,8 @@ xmake test
 
 | OS           | Version     | Architecture | Compiler  | Status |
 | :----------- | :---------- | :----------- | :-------- | :----- |
-| Windows      | 10+         | x86-64       | GCC/Clang | Planned |
-| Linux        | Any         | x86-64       | GCC/Clang | Planned |
+| Windows      | 10+         | x86-64       | GCC/Clang | Tested |
+| Linux        | Any         | x86-64       | GCC/Clang | Tested |
 | macOS        | Any         | x86-64/AArch64 | Clang   | Planned |
 
 ## Architecture

@@ -704,6 +704,12 @@ vm_object_t * vm_gc(vm_t * vm);
  * COMPILER API
  * ============================================================================*/
 
+/**
+ * @brief The main compiler structure for the Infix language.
+ *
+ * Contains all state needed for compilation including the lexer, parser,
+ * semantic analyzer, code generator, and virtual machine.
+ */
 typedef struct {
     lexer_t * lexer;
     parser_t * parser;
@@ -715,13 +721,62 @@ typedef struct {
     bool dump_bytecode;
 } infix_compiler_t;
 
+/**
+ * @brief Creates a new compiler instance.
+ * @return A new compiler instance, or NULL on allocation failure.
+ */
 infix_compiler_t * infix_compiler_create(void);
+
+/**
+ * @brief Destroys a compiler instance and frees all associated resources.
+ * @param[in] compiler The compiler to destroy.
+ */
 void infix_compiler_destroy(infix_compiler_t * compiler);
+
+/**
+ * @brief Compiles source code into bytecode.
+ * @param[in] compiler The compiler instance.
+ * @param[in] source The source code to compile.
+ * @return true if compilation succeeded, false otherwise.
+ *
+ * Use `parser_get_error(compiler->parser)` to retrieve error messages on failure.
+ */
 bool infix_compile(infix_compiler_t * compiler, const char * source);
+
+/**
+ * @brief Runs the compiled bytecode in the virtual machine.
+ * @param[in] compiler The compiler instance (must have been successfully compiled).
+ * @return The result of the last expression evaluated, or NULL on error.
+ */
 vm_object_t * infix_run(infix_compiler_t * compiler);
+
+/**
+ * @brief Compiles a source file.
+ * @param[in] compiler The compiler instance.
+ * @param[in] filename The path to the source file.
+ * @return true if compilation succeeded, false otherwise.
+ */
 bool infix_load_file(infix_compiler_t * compiler, const char * filename);
+
+/**
+ * @brief Enables verbose output during compilation.
+ * @param[in] compiler The compiler instance.
+ * @param[in] verbose true to enable verbose output, false to disable.
+ */
 void infix_set_verbose(infix_compiler_t * compiler, bool verbose);
+
+/**
+ * @brief Enables AST dumping during compilation.
+ * @param[in] compiler The compiler instance.
+ * @param[in] dump true to dump the AST, false otherwise.
+ */
 void infix_set_dump_ast(infix_compiler_t * compiler, bool dump);
+
+/**
+ * @brief Enables bytecode dumping after compilation.
+ * @param[in] compiler The compiler instance.
+ * @param[in] dump true to dump bytecode, false otherwise.
+ */
 void infix_set_dump_bytecode(infix_compiler_t * compiler, bool dump);
 
 #ifdef __cplusplus

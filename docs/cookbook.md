@@ -52,17 +52,16 @@ This guide provides practical, real-world examples to help you solve common task
 #include <stdio.h>
 
 int main() {
-    pulse_compiler_t* compiler = pulse_compiler_create();
+    infix_compiler_t* compiler = infix_compiler_create();
 
     const char* source = "print(\"Hello, World!\");";
 
-    if (pulse_compile(compiler, source)) {
-        pulse_vm_t* vm = pulse_vm_create(compiler);
-        pulse_vm_run(vm);
-        // Program executed successfully
+    if (infix_compile(compiler, source)) {
+        vm_object_t* result = infix_run(compiler);
+        (void)result;
     }
 
-    pulse_compiler_destroy(compiler);
+    infix_compiler_destroy(compiler);
     return 0;
 }
 ```
@@ -79,18 +78,18 @@ int main() {
 #include <stdlib.h>
 
 int run_script(const char* script) {
-    pulse_compiler_t* compiler = pulse_compiler_create();
+    infix_compiler_t* compiler = infix_compiler_create();
 
-    if (!pulse_compile(compiler, script)) {
-        fprintf(stderr, "Compilation error: %s\n", pulse_get_error(compiler));
-        pulse_compiler_destroy(compiler);
+    if (!infix_compile(compiler, script)) {
+        fprintf(stderr, "Compilation error: %s\n", parser_get_error(compiler->parser));
+        infix_compiler_destroy(compiler);
         return 1;
     }
 
-    pulse_vm_t* vm = pulse_vm_create(compiler);
-    pulse_vm_run(vm);
+    vm_object_t* result = infix_run(compiler);
+    (void)result;
 
-    pulse_compiler_destroy(compiler);
+    infix_compiler_destroy(compiler);
     return 0;
 }
 

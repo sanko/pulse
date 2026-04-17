@@ -191,7 +191,7 @@ typedef enum {
     TOKEN_MINUS,
     TOKEN_STAR,
     TOKEN_SLASH,
-    // ... more operators
+    /* ... more operators */
 
     /* Delimiters */
     TOKEN_LPAREN,
@@ -497,12 +497,12 @@ typedef enum {
     OP_MOD,
     OP_NEG,
     OP_NOT,
-    // ... more opcodes
+    /* ... more opcodes */
     OP_CALL,
     OP_RETURN,
     OP_NEW_OBJECT,
     OP_NEW_ARRAY,
-    // ... more opcodes
+    /* ... more opcodes */
 } opcode_t;
 ```
 
@@ -575,7 +575,7 @@ int main(int argc, char** argv) {
     infix_set_dump_ast(compiler, false);
     infix_set_dump_bytecode(compiler, false);
 
-    const char* source = 
+    const char* source =
         "fn fib(n) {\n"
         "    if (n <= 1) return n;\n"
         "    return fib(n - 1) + fib(n - 2);\n"
@@ -584,7 +584,7 @@ int main(int argc, char** argv) {
         "print(fib(10));\n";
 
     if (!infix_compile(compiler, source)) {
-        printf("Compilation failed: %s\n", compiler->errors);
+        printf("Compilation failed: %s\n", parser_get_error(compiler->parser));
         infix_compiler_destroy(compiler);
         return 1;
     }

@@ -1,6 +1,6 @@
-# Building and Integrating infix
+# Building and Integrating pulse
 
-This guide shows you how to build the `infix` library and add it to your C projects.
+This guide shows you how to build the `pulse` library and add it to your C projects.
 
 ## Prerequisites
 
@@ -21,8 +21,8 @@ For convenience, a build system is recommended:
 
 The simplest way to use `infix` is to compile it directly into your project. This "unity build" approach requires no separate build steps and allows for better compiler optimizations.
 
-1.  Copy the `src/` and `include/` directories from the `infix` repository into your project (e.g., into a `third_party/infix` subdirectory).
-2.  Add `third_party/infix/src/infix.c` to your list of source files to be compiled.
+1.  Copy the `src/` and `include/` directories from the `pulse` repository into your project (e.g., into a `third_party/pulse` subdirectory).
+2.  Add `third_party/pulse/src/pulse.c` to your list of source files to be compiled.
 3.  Add the path to the `include` directory to your compiler's include search paths (e.g., `-Ithird_party/infix/include`).
 
 > That's it. Your project will now build with the `infix` library compiled directly in.
