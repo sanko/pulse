@@ -1,7 +1,9 @@
 /**
- * @file 890_emit_direct.c
- * @brief Unified Test Suite: Infix Emit API & Pulse Language Compiler
+ * @file 200_ffi.c
+ * @brief Test Suite: Infix FFI Integration (Optional)
  *
+ * This test requires the infix FFI library to be present. If infix is not
+ * available, the test is skipped gracefully.
  */
 
 #define DBLTAP_IMPLEMENTATION
@@ -10,13 +12,23 @@
 #include "common/infix_config.h"
 #include "pulse/pulse_common.h"
 #include <inttypes.h>
-#include <pulse/emit/emit.h>
-#include <pulse/emit/emit_math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef INFIX_FFI_AVAILABLE
+#include <pulse/emit/emit.h>
+#include <pulse/emit/emit_math.h>
+
+TEST {
+    plan(0);
+    diag("infix FFI not available - test skipped");
+}
+#else
+#include <pulse/emit/emit.h>
+#include <pulse/emit/emit_math.h>
 
 #ifdef _WIN32
 #include <process.h>
@@ -28,10 +40,6 @@ typedef HANDLE pulse_thread_h;
 #include <unistd.h>
 typedef pthread_t pulse_thread_h;
 #endif
-
-/* ============================================================================
- * Pulse Runtime Environment & Type Tags
- * ============================================================================ */
 
 #define TAG_PRIMITIVE 0
 #define TAG_ARRAY 1
@@ -97,3 +105,4 @@ TEST {
     emit_destroy(ctx);
     infix_reverse_destroy(reverse_cb);
 }
+#endif

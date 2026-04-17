@@ -461,6 +461,8 @@ pulse_status _emit_arch_align(emit_context_t * ctx, uint64_t alignment) {
     return PULSE_SUCCESS;
 }
 
+pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
+
 PULSE_API pulse_status emit_get_binary(const emit_context_t * ctx, const uint8_t ** out_data, size_t * out_size) {
     if (!ctx || !out_data || !out_size)
         return PULSE_ERROR_INVALID_ARGUMENT;
@@ -469,6 +471,10 @@ PULSE_API pulse_status emit_get_binary(const emit_context_t * ctx, const uint8_t
     pulse_status status = _emit_resolve_relocations(mutable_ctx);
     if (status != PULSE_SUCCESS)
         return status;
+
+    if (ctx->format == EMIT_FORMAT_ELF) {
+        return emit_write_elf(mutable_ctx, (uint8_t **)out_data, out_size);
+    }
 
     uint64_t total_size = 0;
     for (emit_section_t * sec = ctx->sections; sec != NULL; sec = sec->next)
