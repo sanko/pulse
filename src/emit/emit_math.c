@@ -18,6 +18,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
+pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
+
 #define EMIT_DEFAULT_SECTION_CAPACITY 4096
 #define EMIT_SECTION_GROWTH_FACTOR 2
 
@@ -461,8 +464,6 @@ pulse_status _emit_arch_align(emit_context_t * ctx, uint64_t alignment) {
     return PULSE_SUCCESS;
 }
 
-pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * out_size);
-
 PULSE_API pulse_status emit_get_binary(const emit_context_t * ctx, const uint8_t ** out_data, size_t * out_size) {
     if (!ctx || !out_data || !out_size)
         return PULSE_ERROR_INVALID_ARGUMENT;
@@ -472,9 +473,11 @@ PULSE_API pulse_status emit_get_binary(const emit_context_t * ctx, const uint8_t
     if (status != PULSE_SUCCESS)
         return status;
 
-    if (ctx->format == EMIT_FORMAT_ELF) {
+    if (ctx->format == EMIT_FORMAT_ELF)
         return emit_write_elf(mutable_ctx, (uint8_t **)out_data, out_size);
-    }
+
+    if (ctx->format == EMIT_FORMAT_PE)
+        return emit_write_pe(mutable_ctx, (uint8_t **)out_data, out_size);
 
     uint64_t total_size = 0;
     for (emit_section_t * sec = ctx->sections; sec != NULL; sec = sec->next)
@@ -499,6 +502,31 @@ PULSE_API pulse_status emit_get_offset(const emit_context_t * ctx, uint64_t * ou
     *out_offset = ctx->current_section ? ctx->current_section->size : 0;
     return PULSE_SUCCESS;
 }
+
+PULSE_API pulse_status emit_write_file(const emit_context_t * ctx, const char * filename) {
+    if (!ctx || !filename)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+
+    const uint8_t * data = NULL;
+    size_t size = 0;
+
+    pulse_status status = emit_get_binary(ctx, &data, &size);
+    if (status != PULSE_SUCCESS)
+        return status;
+
+    FILE * f = fopen(filename, "wb");
+    if (!f)
+        return PULSE_ERROR_GENERIC;
+
+    size_t written = fwrite(data, 1, size, f);
+    fclose(f);
+    free((void *)data);
+
+    if (written != size)
+        return PULSE_ERROR_GENERIC;
+
+    return PULSE_SUCCESS;
+}
 /**
  * Copyright (c) 2025 Sanko Robinson
  *
@@ -511,7 +539,9 @@ PULSE_API pulse_status emit_get_offset(const emit_context_t * ctx, uint64_t * ou
  * @file emit_math.c
  * @brief Math operations for JIT code generation (x86-64 and ARM64).
  */
+#include "elf/emit_elf.h"
 #include "emit_internals.h"
+#include "pe/emit_pe.h"
 #include "pulse/emit/emit.h"
 #include "pulse/emit/emit_math.h"
 #include <stdio.h>

@@ -56,7 +56,7 @@ static void write_elf_header(uint8_t * buffer, size_t num_sections, emit_archite
     ehdr->e_shstrndx = 1;
 }
 
-static void write_section_header(Elf64_Shdr * shdr,
+static void write_elf_section_header(Elf64_Shdr * shdr,
                                  uint32_t name_index,
                                  uint32_t sh_type,
                                  uint64_t sh_flags,
@@ -151,17 +151,16 @@ static uint8_t * build_symtab(emit_symbol_t * symbols, size_t num_symbols, const
     size_t sym_idx = 1;
     emit_symbol_t * s = symbols;
     while (s && sym_idx < num_symbols) {
-        sym[sym_idx].st_name = 0;
-        if (strtab_strings && sym_idx < num_symbols) {
-            for (size_t i = 0; i < num_symbols; i++) {
-                if (strtab_strings[i] && s->name && strcmp(strtab_strings[i], s->name) == 0) {
-                    sym[sym_idx].st_name = (uint32_t)i;
-                    break;
-                }
-                if (i >= num_symbols - 1 || !strtab_strings[i + 1])
-                    sym[sym_idx].st_name = (uint32_t)sym_idx;
+        size_t off = 1;
+        for (size_t i = 1; i < num_symbols && strtab_strings[i]; i++) {
+            if (s->name && strcmp(strtab_strings[i], s->name) == 0) {
+                sym[sym_idx].st_name = (uint32_t)off;
+                break;
             }
+            off += strlen(strtab_strings[i]) + 1;
         }
+        if (sym[sym_idx].st_name == 0 && s->name)
+            sym[sym_idx].st_name = (uint32_t)off;
         sym[sym_idx].st_info = ELF64_ST_INFO(STB_GLOBAL, s->is_function ? STT_FUNC : STT_OBJECT);
         sym[sym_idx].st_shndx = 0;
         sym[sym_idx].st_value = s->value;
@@ -221,9 +220,6 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
     if (ctx->relocations) num_extra++;
     size_t num_sections = 1 + num_user_secs + num_extra;
 
-    fprintf(stderr, "DEBUG: num_syms=%zu\n", num_syms);
-    fprintf(stderr, "DEBUG: num_extra=%zu\n", num_extra);
-
     const char * names[16];
     names[0] = "";
     names[1] = ".shstrtab";
@@ -257,7 +253,7 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
     Elf64_Shdr * shdrs = calloc(num_sections, sizeof(Elf64_Shdr));
     if (!shdrs) { free(shstrtab); free(sym_strtab); free(symtab); free(rela); return PULSE_ERROR_ALLOCATION_FAILED; }
 
-    write_section_header(&shdrs[0], 0, SHT_NULL, 0, 0, 0, 0, 0, 0, 0, 0);
+    write_elf_section_header(&shdrs[0], 0, SHT_NULL, 0, 0, 0, 0, 0, 0, 0, 0);
 
     size_t data_off = sizeof(Elf64_Ehdr);
     data_off = ELF_ALIGN(data_off, 16);
@@ -270,7 +266,7 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
         if (sec->flags & EMIT_SECTION_FLAG_ALLOC) flags |= SHF_ALLOC;
         if (sec->flags & EMIT_SECTION_FLAG_EXECUTE) flags |= SHF_EXECINSTR;
         if (sec->flags & EMIT_SECTION_FLAG_WRITE) flags |= SHF_WRITE;
-        write_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, sec->name), SHT_PROGBITS, flags, 0, data_off, sec->size, 0, 0, 16, 0);
+        write_elf_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, sec->name), SHT_PROGBITS, flags, 0, data_off, sec->size, 0, 0, 16, 0);
         shdrs[shdr_idx].sh_offset = data_off;
         data_off += ELF_ALIGN(sec->size, 16);
         if (strcmp(sec->name, ".text") == 0) text_shdr_idx = shdr_idx;
@@ -278,20 +274,18 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
     }
 
     size_t strtab_shdr_idx = 0, symtab_shdr_idx = 0, rela_shdr_idx_final = 0;
-    fprintf(stderr, "DEBUG: before symtab strtab_shdr_idx=%zu\n", strtab_shdr_idx);
 
     if (num_syms > 0) {
-        fprintf(stderr, "DEBUG: num_syms > 0, setting strtab_shdr_idx\n");
         strtab_shdr_idx = shdr_idx;
         data_off = ELF_ALIGN(data_off, 1);
-        write_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".strtab"), SHT_STRTAB, 0, 0, data_off, sym_strtab_size, 0, 0, 1, 0);
+        write_elf_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".strtab"), SHT_STRTAB, 0, 0, data_off, sym_strtab_size, 0, 0, 1, 0);
         shdrs[shdr_idx].sh_offset = data_off;
         data_off += sym_strtab_size;
         shdr_idx++;
 
         symtab_shdr_idx = shdr_idx;
         data_off = ELF_ALIGN(data_off, 8);
-        write_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".symtab"), SHT_SYMTAB, 0, 0, data_off, symtab_size, (uint32_t)strtab_shdr_idx, 0, 8, sizeof(Elf64_Sym));
+        write_elf_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".symtab"), SHT_SYMTAB, 0, 0, data_off, symtab_size, (uint32_t)strtab_shdr_idx, 0, 8, sizeof(Elf64_Sym));
         shdrs[shdr_idx].sh_offset = data_off;
         data_off += ELF_ALIGN(symtab_size, 8);
         shdr_idx++;
@@ -300,7 +294,7 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
     if (rela && rela_count > 0) {
         rela_shdr_idx_final = shdr_idx;
         data_off = ELF_ALIGN(data_off, 8);
-        write_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".rela.text"), SHT_RELA, 0, 0, data_off, rela_size, (uint32_t)symtab_shdr_idx, (uint32_t)text_shdr_idx, 8, sizeof(Elf64_Rela));
+        write_elf_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".rela.text"), SHT_RELA, 0, 0, data_off, rela_size, (uint32_t)symtab_shdr_idx, (uint32_t)text_shdr_idx, 8, sizeof(Elf64_Rela));
         shdrs[shdr_idx].sh_offset = data_off;
         data_off += ELF_ALIGN(rela_size, 8);
         shdr_idx++;
@@ -308,7 +302,7 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
 
     shdr_idx = 1;
     data_off = ELF_ALIGN(data_off, 1);
-    write_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".shstrtab"), SHT_STRTAB, 0, 0, data_off, shstrtab_size, 0, 0, 1, 0);
+    write_elf_section_header(&shdrs[shdr_idx], shstrtab_offset(shstrtab, ".shstrtab"), SHT_STRTAB, 0, 0, data_off, shstrtab_size, 0, 0, 1, 0);
     shdrs[shdr_idx].sh_offset = data_off;
 
     size_t sh_off = ELF_ALIGN(data_off + shstrtab_size, 8);
@@ -335,13 +329,6 @@ pulse_status emit_write_elf(emit_context_t * ctx, uint8_t ** out_data, size_t * 
 
     off = shdrs[symtab_shdr_idx].sh_offset;
     memcpy(buf + off, symtab, symtab_size);
-
-    fprintf(stderr, "DEBUG: strtab_shdr_idx=%zu, sym_strtab_size=%zu\n", strtab_shdr_idx, sym_strtab_size);
-    if (strtab_shdr_idx > 0) {
-        off = shdrs[strtab_shdr_idx].sh_offset;
-        fprintf(stderr, "DEBUG: copying strtab to offset %zu\n", off);
-        memcpy(buf + off, sym_strtab, sym_strtab_size);
-    }
 
     if (rela && rela_count > 0) {
         off = shdrs[rela_shdr_idx_final].sh_offset;

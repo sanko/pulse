@@ -79,6 +79,7 @@ PULSE_API pulse_status emit_emit_u64(emit_context_t * ctx, uint64_t value);
 
 PULSE_API pulse_status emit_get_binary(const emit_context_t * ctx, const uint8_t ** out_data, size_t * out_size);
 PULSE_API pulse_status emit_get_offset(const emit_context_t * ctx, uint64_t * out_offset);
+PULSE_API pulse_status emit_write_file(const emit_context_t * ctx, const char * filename);
 
 PULSE_API pulse_status emit_align(emit_context_t * ctx, uint64_t alignment);
 
