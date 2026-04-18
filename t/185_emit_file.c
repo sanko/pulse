@@ -39,6 +39,11 @@ static void cleanup_test_files(void) {
     unlink("pulse_emit_test_3");
     unlink("pulse_emit_test_4");
     unlink("pulse_emit_test_5");
+    unlink("pulse_emit_test_1.exe");
+    unlink("pulse_emit_test_2.exe");
+    unlink("pulse_emit_test_3.exe");
+    unlink("pulse_emit_test_4.exe");
+    unlink("pulse_emit_test_5.exe");
 #ifdef __linux__
     unlink(test_elf_rel_name);
 #endif
