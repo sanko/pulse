@@ -424,7 +424,7 @@ static void pulse_emit_call(
     int overflow = (int)num_args - ABI_GPR_COUNT;
     if (overflow < 0)
         overflow = 0;
-    size_t padding = (overflow * 8);
+    size_t padding = ((overflow * 8)+15)& ~15; // If overflow is 1, padding is 8 but we round up to 16 byte alignment
 #ifdef _WIN32
     if (ctx->arch == EMIT_ARCH_X86_64) padding += 32;
 #endif
@@ -711,7 +711,7 @@ TEST {
         else
             fail("exec fail");
 #else
-        skip("MOV hardcoded only for x64", 1);
+        skip(1, "MOV hardcoded only for x64");
 #endif
     }
 
@@ -1382,7 +1382,7 @@ TEST {
             emit_destroy(ctx);
         }
 #else
-        skip("Float test only for x64", 1);
+        skip(1, "Float test only for x64");
 #endif
     }
 
@@ -1441,7 +1441,7 @@ TEST {
             emit_destroy(ctx);
         }
 #else
-        skip("Inline cache test uses x64 registers directly", 2);
+        skip(2, "Inline cache test uses x64 registers directly");
 #endif
     }
 

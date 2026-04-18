@@ -430,4 +430,20 @@ pulse_status emit_arm64_brk(emit_context_t * ctx, uint16_t imm);
  */
 pulse_status emit_arm64_svc(emit_context_t * ctx, uint16_t imm);
 
+/**
+ * @brief Pushes a register onto the stack (16-byte aligned).
+ * @param[in] ctx The emit context.
+ * @param[in] reg Register to push.
+ * @return PULSE_SUCCESS on success.
+ */
+pulse_status emit_arm64_push(emit_context_t * ctx, emit_register_t reg);
+
+/**
+ * @brief Pops a register from the stack (16-byte aligned).
+ * @param[in] ctx The emit context.
+ * @param[in] reg Register to pop into.
+ * @return PULSE_SUCCESS on success.
+ */
+pulse_status emit_arm64_pop(emit_context_t * ctx, emit_register_t reg);
+
 #endif /* PULSE_EMIT_ARM64_H */

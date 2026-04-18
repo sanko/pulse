@@ -154,4 +154,10 @@ emit_symbol_t * _emit_lookup_symbol(emit_context_t * ctx, const char * name);
  */
 pulse_status _emit_resolve_relocations(emit_context_t * ctx);
 
+/**
+ * @brief Adds a relocation to the current section.
+ */
+pulse_status _emit_add_relocation(
+    emit_context_t * ctx, const char * name, uint64_t offset, uint8_t size, uint8_t inst_size, bool is_pc_relative);
+
 #endif /* INFIX_EMIT_INTERNALS_H */

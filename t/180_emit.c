@@ -74,9 +74,9 @@ static emit_context_t * create_test_context(void) {
 #define TEST_REG_SCRATCH EMIT_REG_RCX
 #elif defined(PULSE_ARCH_ARM64)
 #define TEST_REG_RET EMIT_REG_X0
-#define TEST_REG_ARG1 EMIT_REG_X0
-#define TEST_REG_ARG2 EMIT_REG_X1
-#define TEST_REG_SCRATCH EMIT_REG_X2
+#define TEST_REG_ARG1 EMIT_REG_X1
+#define TEST_REG_ARG2 EMIT_REG_X2
+#define TEST_REG_SCRATCH EMIT_REG_X3
 #endif
 
 static int setup_test_section(emit_context_t * ctx) {
@@ -94,18 +94,25 @@ static int execute_jit_code(const uint8_t * code, size_t size, void ** out_code)
     if (!exec_mem)
         return 0;
     memcpy(exec_mem, code, size);
+#if defined(__aarch64__) || defined(_M_ARM64)
+    __builtin___clear_cache((char *)exec_mem, (char *)exec_mem + size);
+#endif
     *out_code = exec_mem;
     return 1;
 }
 
 TEST {
-    plan(17);
+    plan(12);
 
     subtest("Context lifecycle") {
         plan(4);
 
         emit_context_t * ctx = NULL;
+#if defined(PULSE_ARCH_X64)
         pulse_status status = emit_create(&ctx, EMIT_ARCH_X86_64, EMIT_FORMAT_BINARY);
+#else
+        pulse_status status = emit_create(&ctx, EMIT_ARCH_AARCH64, EMIT_FORMAT_BINARY);
+#endif
         ok(status == PULSE_SUCCESS, "emit_create returns success");
         ok(ctx != NULL, "emit_create returns non-NULL context");
 
@@ -200,15 +207,21 @@ TEST {
     subtest("MOV instruction") {
         plan(1);
 
+#if defined(PULSE_ARCH_X64)
         uint8_t hardcoded[] = {0xB8, 0x2A, 0x00, 0x00, 0x00, 0xC3};
+        size_t hardcoded_size = 6;
+#elif defined(PULSE_ARCH_ARM64)
+        uint8_t hardcoded[] = {0x40, 0x05, 0x80, 0xD2, 0xC0, 0x03, 0x5F, 0xD6};
+        size_t hardcoded_size = 8;
+#endif
 
-        void * exec_mem = alloc_executable(6);
+        void * exec_mem = alloc_executable(hardcoded_size);
         if (exec_mem) {
-            memcpy(exec_mem, hardcoded, 6);
+            memcpy(exec_mem, hardcoded, hardcoded_size);
             emit_test_fn_0 fn = (emit_test_fn_0)exec_mem;
             uint64_t result = fn();
             ok(result == 42, "identity() == 42");
-            free_executable(exec_mem, 6);
+            free_executable(exec_mem, hardcoded_size);
         }
         else {
             fail("Failed to allocate executable memory");
@@ -279,12 +292,16 @@ TEST {
 
         emit_destroy(ctx);
 #else
-        skip("IMUL test only for x64", 4);
+        skip(4, "IMUL test only for x64");
 #endif
     }
 
     subtest("JMP relocation") {
+#if defined(PULSE_ARCH_ARM64)
         plan(5);
+#else
+        plan(4);
+#endif
 
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
@@ -307,8 +324,15 @@ TEST {
         uint64_t caller_offset;
         (void)emit_get_offset(ctx, &caller_offset);
 
+#if defined(PULSE_ARCH_ARM64)
+        (void)emit_math_prologue(ctx);
+#endif
         (void)emit_math_call(ctx, "jmp_test");
+#if defined(PULSE_ARCH_ARM64)
+        (void)emit_math_epilogue(ctx);
+#else
         (void)emit_math_ret(ctx);
+#endif
 
         const uint8_t * code = NULL;
         size_t code_size = 0;
@@ -329,7 +353,11 @@ TEST {
     }
 
     subtest("Argument passing via globals") {
+#if defined(PULSE_ARCH_ARM64)
+        plan(6);
+#else
         plan(5);
+#endif
 
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
@@ -352,27 +380,36 @@ TEST {
 
         (void)emit_define_symbol(ctx, "add_globals", EMIT_VISIBILITY_DEFAULT, true);
         (void)emit_emit_label(ctx, "add_globals");
+#if defined(PULSE_ARCH_ARM64)
+        (void)emit_math_prologue(ctx);
+#endif
         (void)emit_math_load_sym(ctx, TEST_REG_RET, "arg1");
         (void)emit_math_load_sym(ctx, TEST_REG_SCRATCH, "arg2");
         (void)emit_math_add(ctx, TEST_REG_RET, TEST_REG_SCRATCH);
         (void)emit_math_store_sym(ctx, "result", TEST_REG_RET);
+#if defined(PULSE_ARCH_ARM64)
+        (void)emit_math_epilogue(ctx);
+#else
         (void)emit_math_ret(ctx);
+#endif
 
         uint64_t add_fn_offset;
         (void)emit_get_offset(ctx, &add_fn_offset);
 
         (void)emit_define_symbol(ctx, "mul_globals", EMIT_VISIBILITY_DEFAULT, true);
         (void)emit_emit_label(ctx, "mul_globals");
-#if defined(PULSE_ARCH_X64)
+#if defined(PULSE_ARCH_ARM64)
+        (void)emit_math_prologue(ctx);
+#endif
         (void)emit_math_load_sym(ctx, EMIT_REG_RAX, "arg1");
         (void)emit_math_load_sym(ctx, EMIT_REG_RCX, "arg2");
-        (void)emit_math_mul(ctx, EMIT_REG_RCX);
+        (void)emit_math_mul(ctx, EMIT_REG_RCX); // On ARM64, this is X0 = X0 * Xn
         (void)emit_math_store_sym(ctx, "result", EMIT_REG_RAX);
+#if defined(PULSE_ARCH_ARM64)
+        (void)emit_math_epilogue(ctx);
 #else
-        (void)emit_math_mov_imm(ctx, TEST_REG_RET, 0); // Not implemented for ARM64 yet in emit_math
-        (void)emit_math_store_sym(ctx, "result", TEST_REG_RET);
-#endif
         (void)emit_math_ret(ctx);
+#endif
 
         const uint8_t * code = NULL;
         size_t code_size = 0;
@@ -913,5 +950,33 @@ TEST {
             ok(status == PULSE_SUCCESS && code_size == 4, "emitted ARM64 ret");
             emit_destroy(ctx);
         }
+    }
+
+    subtest("Relocations") {
+        plan(3);
+
+        emit_context_t * ctx = create_test_context();
+        ok(ctx != NULL, "emit_create returns non-NULL context");
+
+        ok(setup_test_section(ctx), "setup test section");
+        (void)emit_math_mov_imm(ctx, TEST_REG_RET, 0x1234);
+        (void)emit_math_jmp(ctx, "target");
+        (void)emit_math_mov_imm(ctx, TEST_REG_RET, 0x5678);
+        (void)emit_emit_label(ctx, "target");
+        (void)emit_math_ret(ctx);
+
+        const uint8_t * code = NULL;
+        size_t code_size = 0;
+        pulse_status status = emit_get_binary(ctx, &code, &code_size);
+        ok(status == PULSE_SUCCESS, "emit_get_binary succeeded");
+
+        void * exec_mem = NULL;
+        if (execute_jit_code(code, code_size, &exec_mem)) {
+            emit_test_fn_0 fn = (emit_test_fn_0)exec_mem;
+            uint64_t result = fn();
+            ok(result == 0x1234, "relocation resolved correctly");
+            free_executable(exec_mem, code_size);
+        }
+        emit_destroy(ctx);
     }
 }

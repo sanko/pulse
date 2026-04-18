@@ -294,7 +294,7 @@ PULSE_API pulse_status emit_emit_u64(emit_context_t * ctx, uint64_t value) {
     return emit_emit_bytes(ctx, bytes, 8);
 }
 
-PULSE_API pulse_status emit_align(emit_context_t * ctx, uint64_t alignment) {
+PULSE_API pulse_status emit_alignxxxxx(emit_context_t * ctx, uint64_t alignment) {
     if (!ctx || !ctx->current_section)
         return PULSE_ERROR_INVALID_ARGUMENT;
 
@@ -313,9 +313,31 @@ PULSE_API pulse_status emit_align(emit_context_t * ctx, uint64_t alignment) {
 
     return PULSE_SUCCESS;
 }
+PULSE_API pulse_status emit_align(emit_context_t * ctx, uint64_t alignment) {
+    if (!ctx || !ctx->current_section) return PULSE_ERROR_INVALID_ARGUMENT;
+    if (alignment == 0) return PULSE_SUCCESS;
 
-PULSE_API pulse_status __attribute__((warn_unused_result)) emit_add_relocation(
-    emit_context_t * ctx, const char * name, uint64_t offset, uint8_t size, uint8_t inst_size) {
+    uint64_t current = ctx->current_section->size;
+    uint64_t aligned = (current + alignment - 1) & ~(alignment - 1);
+    uint64_t padding = aligned - current;
+
+    if (ctx->arch == EMIT_ARCH_AARCH64) {
+        if (padding % 4 != 0) {
+            // Logic error: instructions must be 4-byte aligned
+            return PULSE_ERROR_GENERIC; 
+        }
+        for (uint64_t i = 0; i < padding; i += 4) {
+            emit_emit_u32(ctx, 0xD503201F); // ARM64 NOP
+        }
+    } else {
+        for (uint64_t i = 0; i < padding; i++) {
+            emit_emit_u8(ctx, 0x90); // x64 NOP
+        }
+    }
+    return PULSE_SUCCESS;
+}
+pulse_status _emit_add_relocation(
+    emit_context_t * ctx, const char * name, uint64_t offset, uint8_t size, uint8_t inst_size, bool is_pc_relative) {
     if (!ctx || !name)
         return PULSE_ERROR_INVALID_ARGUMENT;
 
@@ -328,7 +350,7 @@ PULSE_API pulse_status __attribute__((warn_unused_result)) emit_add_relocation(
     rel->offset = offset;
     rel->size = size;
     rel->inst_size = inst_size;
-    rel->is_pc_relative = true;
+    rel->is_pc_relative = is_pc_relative;
 
     rel->next = ctx->relocations;
     ctx->relocations = rel;
@@ -410,19 +432,54 @@ pulse_status _emit_resolve_relocations(emit_context_t * ctx) {
         uint64_t target_addr = target_sec_offset + sym->value;
         uint64_t reloc_addr = reloc_sec_offset + rel->offset;
 
-        int64_t displacement = (int64_t)target_addr - (int64_t)(reloc_addr + rel->size);
+        int64_t displacement = (int64_t)target_addr - (int64_t)reloc_addr;
 
         if (rel->size == 4) {
-            if (rel->is_pc_relative)
-                *(int32_t *)(reloc_sec->data + rel->offset) = (int32_t)displacement;
-            else
+            if (rel->is_pc_relative) {
+                if (ctx->arch == EMIT_ARCH_AARCH64) {
+                    /* Patch AArch64 branch instructions */
+                    uint32_t * instr_ptr = (uint32_t *)(reloc_sec->data + rel->offset);
+                    uint32_t instr = *instr_ptr;
+                    if ((instr & 0xFF000000) == 0x54000000) {
+                        /* B.cond: 19-bit offset at bits 23:5 */
+                        int32_t imm19 = (int32_t)(displacement / 4) & 0x7FFFF;
+                        *instr_ptr = (instr & 0xFF00001F) | (imm19 << 5);
+                    }
+                    else if ((instr & 0x7C000000) == 0x14000000) {
+                        /* B or BL: 26-bit offset at bits 25:0 */
+                        int32_t imm26 = (int32_t)(displacement / 4) & 0x3FFFFFF;
+                        *instr_ptr = (instr & 0xFC000000) | imm26;
+                    }
+                    else {
+                        /* Default fallback for 32-bit relative relocations */
+                        *(int32_t *)(reloc_sec->data + rel->offset) = (int32_t)displacement;
+                    }
+                }
+                else {
+                    /* x64 PC-relative is usually relative to the NEXT instruction */
+                    *(int32_t *)(reloc_sec->data + rel->offset) = (int32_t)(displacement - rel->size);
+                }
+            }
+            else {
                 *(uint32_t *)(reloc_sec->data + rel->offset) = (uint32_t)target_addr;
+            }
         }
         else if (rel->size == 8) {
             if (rel->is_pc_relative)
                 *(int64_t *)(reloc_sec->data + rel->offset) = displacement;
-            else
-                *(uint64_t *)(reloc_sec->data + rel->offset) = target_addr;
+            else {
+                if (ctx->arch == EMIT_ARCH_AARCH64 && rel->inst_size == 16) {
+                    /* Patch 4 MOVZ/MOVK instructions with 64-bit absolute address */
+                    uint32_t * instrs = (uint32_t *)(reloc_sec->data + rel->offset);
+                    instrs[0] = (instrs[0] & 0xFFE0001F) | (uint32_t)((target_addr & 0xFFFF) << 5);
+                    instrs[1] = (instrs[1] & 0xFFE0001F) | (uint32_t)(((target_addr >> 16) & 0xFFFF) << 5);
+                    instrs[2] = (instrs[2] & 0xFFE0001F) | (uint32_t)(((target_addr >> 32) & 0xFFFF) << 5);
+                    instrs[3] = (instrs[3] & 0xFFE0001F) | (uint32_t)(((target_addr >> 48) & 0xFFFF) << 5);
+                }
+                else {
+                    *(uint64_t *)(reloc_sec->data + rel->offset) = target_addr;
+                }
+            }
         }
     }
 
@@ -844,7 +901,10 @@ PULSE_API pulse_status emit_math_mul(emit_context_t * ctx, emit_register_t src) 
     case EMIT_ARCH_X86_64:
         return emit_x64_mul(ctx, src);
     case EMIT_ARCH_AARCH64:
-        return PULSE_ERROR_NOT_IMPLEMENTED;
+    {
+        uint8_t rs = _emit_arm64_reg(src);
+        return emit_arm64_mul(ctx, 0, 0, rs); // X0 = X0 * Xs
+    }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -857,7 +917,12 @@ PULSE_API pulse_status emit_math_imul_imm(emit_context_t * ctx, emit_register_t 
     case EMIT_ARCH_X86_64:
         return emit_x64_imul_imm(ctx, dest, imm);
     case EMIT_ARCH_AARCH64:
-        return PULSE_ERROR_NOT_IMPLEMENTED;
+    {
+        /* Use X16 as scratch to load immediate then multiply */
+        uint8_t rd = _emit_arm64_reg(dest);
+        EMIT_CHECK(emit_math_mov_imm(ctx, (emit_register_t)116, (uint64_t)imm)); // EMIT_REG_X16 is 116
+        return emit_arm64_mul(ctx, rd, rd, 16);
+    }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -883,7 +948,11 @@ PULSE_API pulse_status emit_math_store_sym(emit_context_t * ctx, const char * sy
     case EMIT_ARCH_X86_64:
         return emit_x64_store_sym(ctx, sym, src);
     case EMIT_ARCH_AARCH64:
-        return PULSE_ERROR_NOT_IMPLEMENTED;
+    {
+        /* Use X16 as scratch for symbol address */
+        EMIT_CHECK(emit_math_load_sym(ctx, (emit_register_t)116, sym));
+        return emit_arm64_str(ctx, 16, 0, _emit_arm64_reg(src));
+    }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -896,7 +965,17 @@ PULSE_API pulse_status emit_math_load_sym(emit_context_t * ctx, emit_register_t 
     case EMIT_ARCH_X86_64:
         return emit_x64_load_sym(ctx, dest, sym);
     case EMIT_ARCH_AARCH64:
-        return PULSE_ERROR_NOT_IMPLEMENTED;
+    {
+        /* Load address via a sequence that will be patched */
+        uint8_t rd = _emit_arm64_reg(dest);
+        uint64_t offset = ctx->current_section ? ctx->current_section->size : 0;
+        EMIT_CHECK(emit_arm64_movz(ctx, rd, 0, 0, true));
+        EMIT_CHECK(emit_arm64_movk(ctx, rd, 0, 16, true));
+        EMIT_CHECK(emit_arm64_movk(ctx, rd, 0, 32, true));
+        EMIT_CHECK(emit_arm64_movk(ctx, rd, 0, 48, true));
+        EMIT_CHECK(_emit_add_relocation(ctx, sym, offset, 8, 16, false));
+        return PULSE_SUCCESS;
+    }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -923,7 +1002,7 @@ PULSE_API pulse_status emit_math_push(emit_context_t * ctx, emit_register_t reg)
     case EMIT_ARCH_X86_64:
         return emit_x64_push(ctx, reg);
     case EMIT_ARCH_AARCH64:
-        return PULSE_ERROR_NOT_IMPLEMENTED;
+        return emit_arm64_push(ctx, reg);
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -936,7 +1015,7 @@ PULSE_API pulse_status emit_math_pop(emit_context_t * ctx, emit_register_t reg) 
     case EMIT_ARCH_X86_64:
         return emit_x64_pop(ctx, reg);
     case EMIT_ARCH_AARCH64:
-        return PULSE_ERROR_NOT_IMPLEMENTED;
+        return emit_arm64_pop(ctx, reg);
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }

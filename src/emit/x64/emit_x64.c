@@ -188,7 +188,7 @@ pulse_status emit_x64_jmp(emit_context_t * ctx, const char * label) {
     uint64_t jump_offset = ctx->current_section->size;
     EMIT_CHECK(emit_emit_u8(ctx, 0xE9));
     EMIT_CHECK(emit_emit_u32(ctx, 0));
-    EMIT_CHECK(emit_add_relocation(ctx, label, jump_offset + 1, 4, 5));
+    EMIT_CHECK(_emit_add_relocation(ctx, label, jump_offset + 1, 4, 5, true));
     return PULSE_SUCCESS;
 }
 
@@ -197,7 +197,7 @@ pulse_status emit_x64_jmp_cc(emit_context_t * ctx, emit_cc_t cc, const char * la
     EMIT_CHECK(emit_emit_u8(ctx, 0x0F));
     EMIT_CHECK(emit_emit_u8(ctx, x86_jcc_opcodes[cc]));
     EMIT_CHECK(emit_emit_u32(ctx, 0));
-    EMIT_CHECK(emit_add_relocation(ctx, label, jump_offset + 2, 4, 6));
+    EMIT_CHECK(_emit_add_relocation(ctx, label, jump_offset + 2, 4, 6, true));
     return PULSE_SUCCESS;
 }
 
@@ -205,7 +205,7 @@ pulse_status emit_x64_call(emit_context_t * ctx, const char * name) {
     uint64_t call_offset = ctx->current_section->size;
     EMIT_CHECK(emit_emit_u8(ctx, 0xE8));
     EMIT_CHECK(emit_emit_u32(ctx, 0));
-    EMIT_CHECK(emit_add_relocation(ctx, name, call_offset + 1, 4, 5));
+    EMIT_CHECK(_emit_add_relocation(ctx, name, call_offset + 1, 4, 5, true));
     return PULSE_SUCCESS;
 }
 
@@ -278,7 +278,7 @@ pulse_status emit_x64_load_sym(emit_context_t * ctx, emit_register_t dest, const
     EMIT_CHECK(emit_emit_u8(ctx, 0x8B));
     EMIT_CHECK(emit_emit_u8(ctx, 0x05 | ((dest & 0x07) << 3)));
     EMIT_CHECK(emit_emit_u32(ctx, 0));
-    EMIT_CHECK(emit_add_relocation(ctx, sym, load_offset + 3, 4, 7));
+    EMIT_CHECK(_emit_add_relocation(ctx, sym, load_offset + 3, 4, 7, true));
     return PULSE_SUCCESS;
 }
 
@@ -288,7 +288,7 @@ pulse_status emit_x64_store_sym(emit_context_t * ctx, const char * sym, emit_reg
     EMIT_CHECK(emit_emit_u8(ctx, 0x89));
     EMIT_CHECK(emit_emit_u8(ctx, 0x05 | ((src & 0x07) << 3)));
     EMIT_CHECK(emit_emit_u32(ctx, 0));
-    EMIT_CHECK(emit_add_relocation(ctx, sym, store_offset + 3, 4, 7));
+    EMIT_CHECK(_emit_add_relocation(ctx, sym, store_offset + 3, 4, 7, true));
     return PULSE_SUCCESS;
 }
 

@@ -25,9 +25,6 @@
 #define PULSE_BUILDING
 #include "emit_arm64.h"
 
-pulse_status emit_add_relocation(
-    emit_context_t * ctx, const char * name, uint64_t offset, uint8_t size, uint8_t inst_size);
-
 #define ARM64_COND_EQ 0x0
 #define ARM64_COND_NE 0x1
 #define ARM64_COND_CS 0x2
@@ -266,8 +263,7 @@ pulse_status emit_arm64_b_cond(emit_context_t * ctx, emit_cc_t cc, const char * 
     emit_cc_t arm64_cc = x64_to_arm64_cc(cc);
     instr |= (arm64_cc & 0xF) << 0;
     EMIT_CHECK(emit_emit_u32(ctx, instr));
-    EMIT_CHECK(emit_emit_u32(ctx, 0));
-    EMIT_CHECK(emit_add_relocation(ctx, label, branch_offset, 4, 8));
+    EMIT_CHECK(_emit_add_relocation(ctx, label, branch_offset, 4, 4, true));
     return PULSE_SUCCESS;
 }
 
@@ -275,8 +271,7 @@ pulse_status emit_arm64_b(emit_context_t * ctx, const char * label) {
     uint64_t branch_offset = ctx->current_section->size;
     uint32_t instr = 0x14000000;
     EMIT_CHECK(emit_emit_u32(ctx, instr));
-    EMIT_CHECK(emit_emit_u32(ctx, 0));
-    EMIT_CHECK(emit_add_relocation(ctx, label, branch_offset, 4, 8));
+    EMIT_CHECK(_emit_add_relocation(ctx, label, branch_offset, 4, 4, true));
     return PULSE_SUCCESS;
 }
 
@@ -284,34 +279,29 @@ pulse_status emit_arm64_bl(emit_context_t * ctx, const char * name) {
     uint64_t call_offset = ctx->current_section->size;
     uint32_t instr = 0x94000000;
     EMIT_CHECK(emit_emit_u32(ctx, instr));
-    EMIT_CHECK(emit_emit_u32(ctx, 0));
-    EMIT_CHECK(emit_add_relocation(ctx, name, call_offset, 4, 8));
+    EMIT_CHECK(_emit_add_relocation(ctx, name, call_offset, 4, 4, true));
     return PULSE_SUCCESS;
 }
 
 pulse_status emit_arm64_ret(emit_context_t * ctx, emit_register_t lr) {
-    uint32_t instr = 0xD65F03C0;
-    instr |= (lr & 0x1F) << 0;
+    uint32_t instr = 0xD65F0000;
+    instr |= (lr & 0x1F) << 5;
     return emit_emit_u32(ctx, instr);
 }
 
 pulse_status emit_arm64_ldr(emit_context_t * ctx, emit_register_t dest, emit_register_t base, int32_t offset) {
+    if (offset < 0 || (offset % 8) != 0) {
+        /* Use pre-indexed LDR if offset is negative or not 8-aligned */
+        uint32_t instr = 0xF8400C00;
+        instr |= (dest & 0x1F) << 0;
+        instr |= (base & 0x1F) << 5;
+        instr |= (offset & 0x1FF) << 12;
+        return emit_emit_u32(ctx, instr);
+    }
     uint32_t instr = 0xF9400000;
     instr |= (dest & 0x1F) << 0;
     instr |= (base & 0x1F) << 5;
-    uint16_t offset12 = (offset >= 0) ? ((offset / 8) & 0xFFF) : 0;
-    instr |= offset12 << 10;
-    if (offset < 0) {
-        uint32_t pre_index = 0xF8100000;
-        pre_index |= (dest & 0x1F) << 0;
-        pre_index |= (base & 0x1F) << 5;
-        int16_t simm9 = offset & 0x1FF;
-        if (simm9 < 0)
-            simm9 = -simm9;
-        pre_index |= ((~simm9 + 1) & 0x1FF) << 12;
-        pre_index |= 1 << 24;
-        return emit_emit_u32(ctx, pre_index);
-    }
+    instr |= ((offset / 8) & 0xFFF) << 10;
     return emit_emit_u32(ctx, instr);
 }
 
@@ -361,22 +351,18 @@ pulse_status emit_arm64_ldrsw(emit_context_t * ctx, emit_register_t dest, emit_r
 }
 
 pulse_status emit_arm64_str(emit_context_t * ctx, emit_register_t base, int32_t offset, emit_register_t src) {
+    if (offset < 0 || (offset % 8) != 0) {
+        /* Use pre-indexed STR if offset is negative or not 8-aligned */
+        uint32_t instr = 0xF8000C00;
+        instr |= (src & 0x1F) << 0;
+        instr |= (base & 0x1F) << 5;
+        instr |= (offset & 0x1FF) << 12;
+        return emit_emit_u32(ctx, instr);
+    }
     uint32_t instr = 0xF9000000;
     instr |= (src & 0x1F) << 0;
     instr |= (base & 0x1F) << 5;
-    uint16_t offset12 = (offset >= 0) ? ((offset / 8) & 0xFFF) : 0;
-    instr |= offset12 << 10;
-    if (offset < 0) {
-        uint32_t pre_index = 0xF8000000;
-        pre_index |= (src & 0x1F) << 0;
-        pre_index |= (base & 0x1F) << 5;
-        int16_t simm9 = offset & 0x1FF;
-        if (simm9 < 0)
-            simm9 = -simm9;
-        pre_index |= ((~simm9 + 1) & 0x1FF) << 12;
-        pre_index |= 1 << 24;
-        return emit_emit_u32(ctx, pre_index);
-    }
+    instr |= ((offset / 8) & 0xFFF) << 10;
     return emit_emit_u32(ctx, instr);
 }
 
@@ -410,4 +396,14 @@ pulse_status emit_arm64_svc(emit_context_t * ctx, uint16_t imm) {
     uint32_t instr = 0xD4000001;
     instr |= (imm & 0xFFFF) << 5;
     return emit_emit_u32(ctx, instr);
+}
+
+pulse_status emit_arm64_push(emit_context_t * ctx, emit_register_t reg) {
+    /* str reg, [sp, #-16]! */
+    return emit_emit_u32(ctx, 0xF81F0FE0 | (_emit_arm64_reg(reg) & 0x1F));
+}
+
+pulse_status emit_arm64_pop(emit_context_t * ctx, emit_register_t reg) {
+    /* ldr reg, [sp], #16 */
+    return emit_emit_u32(ctx, 0xF84107E0 | (_emit_arm64_reg(reg) & 0x1F));
 }
