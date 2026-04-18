@@ -441,12 +441,26 @@ pulse_status _emit_resolve_relocations(emit_context_t * ctx) {
                     uint32_t * instr_ptr = (uint32_t *)(reloc_sec->data + rel->offset);
                     uint32_t instr = *instr_ptr;
 
-                    // Mask for B (0x14000000) and BL (0x94000000)
-                    if ((instr & 0x7C000000) == 0x14000000) {
-                        int64_t delta = (int64_t)target_addr - (int64_t)reloc_addr;
-                        /* imm26: bits 25:0, signed offset / 4 */
-                        int32_t imm26 = (int32_t)(delta / 4) & 0x03FFFFFF;
+                    if ((instr & 0x9F000000) == 0x10000000) {
+                        /* ADR: 21-bit PC-relative offset */
+                        /* immlo: bits [30:29], immhi: bits [23:5] */
+                        uint32_t immlo = (uint32_t)(displacement & 0x3) << 29;
+                        uint32_t immhi = (uint32_t)((displacement >> 2) & 0x7FFFF) << 5;
+                        *instr_ptr = (instr & 0x9F00001F) | immlo | immhi;
+                    }
+                    else if ((instr & 0xFF000000) == 0x54000000) {
+                        /* B.cond: 19-bit offset at bits 23:5 */
+                        int32_t imm19 = (int32_t)(displacement / 4) & 0x7FFFF;
+                        *instr_ptr = (instr & 0xFF00001F) | (imm19 << 5);
+                    }
+                    else if ((instr & 0x7C000000) == 0x14000000) {
+                        /* B or BL: 26-bit offset at bits 25:0 */
+                        int32_t imm26 = (int32_t)(displacement / 4) & 0x3FFFFFF;
                         *instr_ptr = (instr & 0xFC000000) | imm26;
+                    }
+                    else {
+                        /* If it's a raw 4-byte data relocation (not an instruction) */
+                        *(int32_t *)(reloc_sec->data + rel->offset) = (int32_t)displacement;
                     }
                 }
                 else {
@@ -952,17 +966,12 @@ PULSE_API pulse_status emit_math_store_sym(emit_context_t * ctx, const char * sy
     case EMIT_ARCH_AARCH64:
         {
             uint8_t rs = _emit_arm64_reg(src);
-            uint64_t offset = ctx->current_section ? ctx->current_section->size : 0;
-
-            /* Use X16 (IP0) as a temporary scratch register for the address */
-            /* ADR X16, label */
-            EMIT_CHECK(emit_emit_u32(ctx, 0x10000000 | 16));
-
-            /* STR Xs, [X16] (Store the value into the address) */
-            EMIT_CHECK(emit_arm64_str(ctx, 16, 0, rs));
-
-            EMIT_CHECK(_emit_add_relocation(ctx, sym, offset, 4, 4, true));
-            return PULSE_SUCCESS;
+        uint64_t offset = ctx->current_section->size;
+        /* ADR X16, label (Load address into scratch IP0) */
+        EMIT_CHECK(emit_emit_u32(ctx, 0x10000010));
+        /* STR Xs, [X16] (Store value) */
+        EMIT_CHECK(emit_arm64_str(ctx, 16, 0, rs));
+        return _emit_add_relocation(ctx, sym, offset, 4, 4, true);
         }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
@@ -972,24 +981,20 @@ PULSE_API pulse_status emit_math_store_sym(emit_context_t * ctx, const char * sy
 PULSE_API pulse_status emit_math_load_sym(emit_context_t * ctx, emit_register_t dest, const char * sym) {
     if (!ctx)
         return PULSE_ERROR_INVALID_ARGUMENT;
+    if (ctx->arch == EMIT_ARCH_AARCH64) {
+    }
     switch (ctx->arch) {
     case EMIT_ARCH_X86_64:
         return emit_x64_load_sym(ctx, dest, sym);
     case EMIT_ARCH_AARCH64:
         {
             uint8_t rd = _emit_arm64_reg(dest);
-            uint64_t offset = ctx->current_section ? ctx->current_section->size : 0;
-
-            /* ADR Xd, label (Load address of symbol relative to PC) */
-            /* Opcode: 0x10000000 | rd */
-            EMIT_CHECK(emit_emit_u32(ctx, 0x10000000 | (rd & 0x1F)));
-
-            /* LDR Xd, [Xd] (Actually fetch the VALUE from that address) */
+            uint64_t offset = ctx->current_section->size;
+            /* ADR Xd, label (Load the address) */
+            EMIT_CHECK(emit_emit_u32(ctx, 0x10000000 | rd));
+            /* LDR Xd, [Xd] (Load the value from that address) */
             EMIT_CHECK(emit_arm64_ldr(ctx, rd, rd, 0));
-
-            /* Add relocation to patch the ADR instruction */
-            EMIT_CHECK(_emit_add_relocation(ctx, sym, offset, 4, 4, true));
-            return PULSE_SUCCESS;
+            return _emit_add_relocation(ctx, sym, offset, 4, 4, true);
         }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;

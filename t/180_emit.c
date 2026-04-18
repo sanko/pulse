@@ -34,15 +34,16 @@ typedef int64_t (*emit_test_fn_2i)(int64_t, int64_t);
  * Debug & Utility Helpers
  * ============================================================================ */
 
-static void pulse_debug_hex_dump(const char* label, const void* data, size_t size) {
-    const unsigned char* p = (const unsigned char*)data;
+static void pulse_debug_hex_dump(const char * label, const void * data, size_t size) {
+    const unsigned char * p = (const unsigned char *)data;
     printf("# --- HEX DUMP: %s (%zu bytes) ---\n", label, size);
     for (size_t i = 0; i < size; i += 16) {
         printf("# %04zx: ", i);
-        for (int j = 0; j < 16; j++) {
-            if (i + j < size) printf("%02x ", p[i + j]);
-            else printf("   ");
-        }
+        for (int j = 0; j < 16; j++)
+            if (i + j < size)
+                printf("%02x ", p[i + j]);
+            else
+                printf("   ");
         printf(" | ");
         for (int j = 0; j < 16; j++) {
             if (i + j < size) {
@@ -61,11 +62,13 @@ static uint64_t return_72(void) { return 72; }
 static void * alloc_executable(size_t size) {
 #ifdef _WIN32
     void * mem = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (!mem) return NULL;
+    if (!mem)
+        return NULL;
     return mem;
 #else
     void * mem = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    if (mem == MAP_FAILED) return NULL;
+    if (mem == MAP_FAILED)
+        return NULL;
     return mem;
 #endif
 }
@@ -81,7 +84,8 @@ static void free_executable(void * mem, size_t size) {
 
 static int execute_jit_code(const uint8_t * code, size_t size, void ** out_code) {
     void * exec_mem = alloc_executable(size);
-    if (!exec_mem) return 0;
+    if (!exec_mem)
+        return 0;
     memcpy(exec_mem, code, size);
 #if defined(__aarch64__) || defined(_M_ARM64) || defined(PULSE_ARCH_ARM64)
     __builtin___clear_cache((char *)exec_mem, (char *)exec_mem + size);
@@ -99,7 +103,8 @@ static int run_disk_executable(const char * path) {
 #endif
     int ret = system(cmd);
 #ifndef _WIN32
-    if (WIFEXITED(ret)) return WEXITSTATUS(ret);
+    if (WIFEXITED(ret))
+        return WEXITSTATUS(ret);
     return -1;
 #else
     return ret;
@@ -115,7 +120,8 @@ static emit_context_t * create_test_context(void) {
 #else
     pulse_status status = PULSE_ERROR_NOT_IMPLEMENTED;
 #endif
-    if (status != PULSE_SUCCESS) return NULL;
+    if (status != PULSE_SUCCESS)
+        return NULL;
     return ctx;
 }
 
@@ -133,9 +139,11 @@ static emit_context_t * create_test_context(void) {
 
 static int setup_test_section(emit_context_t * ctx) {
     pulse_status status = emit_add_section(ctx, EMIT_TEST_SECTION, EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_EXECUTE);
-    if (status != PULSE_SUCCESS) return 0;
+    if (status != PULSE_SUCCESS)
+        return 0;
     status = emit_begin_section(ctx, EMIT_TEST_SECTION);
-    if (status != PULSE_SUCCESS) return 0;
+    if (status != PULSE_SUCCESS)
+        return 0;
     return 1;
 }
 
@@ -260,7 +268,8 @@ TEST {
             uint64_t result = fn();
             ok(result == 42, "identity() == 42");
             free_executable(exec_mem, hardcoded_size);
-        } else {
+        }
+        else {
             fail("Failed to allocate executable memory");
         }
     }
@@ -269,7 +278,8 @@ TEST {
         plan(4);
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
-        if (!ctx) return;
+        if (!ctx)
+            return;
 
         ok(setup_test_section(ctx), "setup test section");
 
@@ -299,7 +309,8 @@ TEST {
 #if defined(PULSE_ARCH_X64)
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
-        if (!ctx) return;
+        if (!ctx)
+            return;
 
         ok(setup_test_section(ctx), "setup test section");
 
@@ -335,7 +346,8 @@ TEST {
 #endif
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
-        if (!ctx) return;
+        if (!ctx)
+            return;
 
         ok(setup_test_section(ctx), "setup test section");
 
@@ -383,7 +395,8 @@ TEST {
 #endif
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
-        if (!ctx) return;
+        if (!ctx)
+            return;
 
         (void)emit_add_section(ctx, ".data", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_WRITE);
         (void)emit_begin_section(ctx, ".data");
@@ -472,7 +485,8 @@ TEST {
 
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
-        if (!ctx) return;
+        if (!ctx)
+            return;
 
         (void)emit_add_section(ctx, ".data", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_WRITE);
         (void)emit_begin_section(ctx, ".data");
@@ -508,41 +522,49 @@ TEST {
         ok(status == PULSE_SUCCESS, "emit_get_binary succeeded");
 
         void * exec_mem = NULL;
-        if (!execute_jit_code(code, code_size, &exec_mem)) {
+
+        if (execute_jit_code(code, code_size, &exec_mem)) {
+            volatile uint64_t * base = (volatile uint64_t *)exec_mem;
+            volatile uint64_t * data_ptr = &base[0];
+            volatile uint64_t * data_value = &base[1];
+
+            emit_test_fn_0 store_fn = (emit_test_fn_0)((uint8_t *)exec_mem + data_section_size);
+            emit_test_fn_0 load_fn = (emit_test_fn_0)((uint8_t *)exec_mem + data_section_size + store_ptr_offset);
+
+            /* data_ptr should point to data_value in the JIT memory */
+
+            *data_ptr = (uint64_t)data_value;
+            *data_value = 42;
+            (void)store_fn();
+            volatile uint64_t check1 = *data_value;
+            ok(check1 == 42, "store_ptr: dereferenced pointer to get 42");
+
+            *data_value = 123;
+            uint64_t load_result1 = (uint64_t)load_fn();
+            ok(load_result1 == 123, "load_ptr: loaded value is 123");
+
+            *data_value = 0xDEADBEEF;
+            uint64_t load_result2 = (uint64_t)load_fn();
+            ok(load_result2 == 0xDEADBEEF, "load_ptr: loaded 0xDEADBEEF");
+
+            emit_destroy(ctx);
+            free_executable(exec_mem, code_size);
+        }
+        else {
+
             emit_destroy(ctx);
             fail("Failed to allocate executable memory");
-            return;
+
+            skip(100, "Failed to execute JIT");
         }
-
-        volatile uint64_t * data_ptr = (volatile uint64_t *)((uint8_t *)exec_mem + 0);
-        volatile uint64_t * data_value = (volatile uint64_t *)((uint8_t *)exec_mem + 8);
-
-        emit_test_fn_0 store_fn = (emit_test_fn_0)((uint8_t *)exec_mem + data_section_size);
-        emit_test_fn_0 load_fn = (emit_test_fn_0)((uint8_t *)exec_mem + data_section_size + store_ptr_offset);
-
-        *data_ptr = (uint64_t)data_value;
-        *data_value = 42;
-        (void)store_fn();
-        volatile uint64_t check1 = *data_value;
-        ok(check1 == 42, "store_ptr: dereferenced pointer to get 42");
-
-        *data_value = 123;
-        uint64_t load_result1 = (uint64_t)load_fn();
-        ok(load_result1 == 123, "load_ptr: loaded value is 123");
-
-        *data_value = 0xDEADBEEF;
-        uint64_t load_result2 = (uint64_t)load_fn();
-        ok(load_result2 == 0xDEADBEEF, "load_ptr: loaded 0xDEADBEEF");
-
-        emit_destroy(ctx);
-        free_executable(exec_mem, code_size);
     }
 
     subtest("Small struct (2 int fields)") {
         plan(5);
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
-        if (!ctx) return;
+        if (!ctx)
+            return;
 
         (void)emit_add_section(ctx, ".data", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_WRITE);
         (void)emit_begin_section(ctx, ".data");
@@ -606,7 +628,8 @@ TEST {
         plan(4);
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
-        if (!ctx) return;
+        if (!ctx)
+            return;
 
         (void)emit_add_section(ctx, ".data", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_WRITE);
         (void)emit_begin_section(ctx, ".data");
@@ -668,7 +691,8 @@ TEST {
         plan(4);
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
-        if (!ctx) return;
+        if (!ctx)
+            return;
 
         (void)emit_add_section(ctx, ".data", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_WRITE);
         (void)emit_begin_section(ctx, ".data");
@@ -733,7 +757,8 @@ TEST {
         plan(6);
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
-        if (!ctx) return;
+        if (!ctx)
+            return;
 
         (void)emit_add_section(ctx, ".data", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_WRITE);
         (void)emit_begin_section(ctx, ".data");
@@ -821,7 +846,8 @@ TEST {
 #if defined(PULSE_ARCH_X64)
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
-        if (!ctx) return;
+        if (!ctx)
+            return;
 
         (void)emit_add_section(ctx, ".data", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_WRITE);
         (void)emit_begin_section(ctx, ".data");
@@ -882,7 +908,8 @@ TEST {
         plan(5);
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
-        if (!ctx) return;
+        if (!ctx)
+            return;
 
         (void)emit_add_section(ctx, ".data", EMIT_SECTION_FLAG_ALLOC | EMIT_SECTION_FLAG_WRITE);
         (void)emit_begin_section(ctx, ".data");
@@ -1016,17 +1043,17 @@ TEST {
 #if defined(PULSE_ARCH_X64)
         emit_math_mov_imm(ctx, EMIT_REG_RDI, 42);
         emit_math_mov_imm(ctx, EMIT_REG_RAX, 60);
-        emit_emit_u16(ctx, 0x050F); // syscall
+        emit_emit_u16(ctx, 0x050F);  // syscall
 #elif defined(PULSE_ARCH_ARM64)
         emit_math_mov_imm(ctx, EMIT_REG_X0, 42);
         emit_math_mov_imm(ctx, EMIT_REG_X8, 93);
-        emit_emit_u32(ctx, 0xD4000001); // svc 0
+        emit_emit_u32(ctx, 0xD4000001);  // svc 0
 #endif
 
-        uint8_t* data = NULL;
+        uint8_t * data = NULL;
         size_t size = 0;
         emit_write_elf_exec(ctx, &data, &size);
-        FILE* f = fopen("pulse_emit_test_exec.elf", "wb");
+        FILE * f = fopen("pulse_emit_test_exec.elf", "wb");
         if (f) {
             fwrite(data, 1, size, f);
             fclose(f);
