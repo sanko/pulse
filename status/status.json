@@ -47,5 +47,5 @@
 ,
 "windows-x86_64-gcc": "👎🏽 failing"
 ,
-"windows-x86_64-msvc": "👎🏽 failing"
+"windows-x86_64-msvc": "👍🏽 passing"
 }
