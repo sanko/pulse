@@ -12,6 +12,7 @@
 #include <inttypes.h>
 #include <pulse/emit/emit.h>
 #include <pulse/emit/emit_math.h>
+#include <emit/elf/emit_elf.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -778,7 +779,7 @@ TEST {
     }
 
     subtest("Relocations") {
-        plan(3);
+        plan(4);
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
         ok(setup_test_section(ctx), "setup test section");
