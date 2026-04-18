@@ -102,7 +102,7 @@ static int execute_jit_code(const uint8_t * code, size_t size, void ** out_code)
 }
 
 TEST {
-    plan(18);
+    plan(12);
 
     subtest("Context lifecycle") {
         plan(4);
@@ -300,7 +300,7 @@ TEST {
 #if defined(PULSE_ARCH_ARM64)
         plan(5);
 #else
-        plan(5);
+        plan(4);
 #endif
 
         emit_context_t * ctx = create_test_context();
@@ -866,7 +866,7 @@ emit_align(ctx, 4);
         }
         emit_destroy(ctx);
 #else
-        skip("Variadic call test only for x64", 5);
+        skip(5, "Variadic call test only for x64");
 #endif
     }
 
@@ -956,7 +956,7 @@ emit_align(ctx, 4);
     }
 
     subtest("Relocations") {
-        plan(4);
+        plan(3);
 
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
