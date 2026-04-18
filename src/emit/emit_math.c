@@ -314,8 +314,10 @@ PULSE_API pulse_status emit_alignxxxxx(emit_context_t * ctx, uint64_t alignment)
     return PULSE_SUCCESS;
 }
 PULSE_API pulse_status emit_align(emit_context_t * ctx, uint64_t alignment) {
-    if (!ctx || !ctx->current_section) return PULSE_ERROR_INVALID_ARGUMENT;
-    if (alignment == 0) return PULSE_SUCCESS;
+    if (!ctx || !ctx->current_section)
+        return PULSE_ERROR_INVALID_ARGUMENT;
+    if (alignment == 0)
+        return PULSE_SUCCESS;
 
     uint64_t current = ctx->current_section->size;
     uint64_t aligned = (current + alignment - 1) & ~(alignment - 1);
@@ -326,13 +328,12 @@ PULSE_API pulse_status emit_align(emit_context_t * ctx, uint64_t alignment) {
             // Logic error: instructions must be 4-byte aligned
             return PULSE_ERROR_GENERIC;
         }
-        for (uint64_t i = 0; i < padding; i += 4) {
-            emit_emit_u32(ctx, 0xD503201F); // ARM64 NOP
-        }
-    } else {
-        for (uint64_t i = 0; i < padding; i++) {
-            emit_emit_u8(ctx, 0x90); // x64 NOP
-        }
+        for (uint64_t i = 0; i < padding; i += 4)
+            emit_emit_u32(ctx, 0xD503201F);  // ARM64 NOP
+    }
+    else {
+        for (uint64_t i = 0; i < padding; i++)
+            emit_emit_u8(ctx, 0x90);  // x64 NOP
     }
     return PULSE_SUCCESS;
 }
@@ -437,29 +438,15 @@ pulse_status _emit_resolve_relocations(emit_context_t * ctx) {
         if (rel->size == 4) {
             if (rel->is_pc_relative) {
                 if (ctx->arch == EMIT_ARCH_AARCH64) {
-    uint32_t * instr_ptr = (uint32_t *)(reloc_sec->data + rel->offset);
-    uint32_t instr = *instr_ptr;
+                    uint32_t * instr_ptr = (uint32_t *)(reloc_sec->data + rel->offset);
+                    uint32_t instr = *instr_ptr;
 
-    if ((instr & 0x9F000000) == 0x10000000) {
-        /* ADR: 21-bit PC-relative offset */
-        int64_t disp = displacement;
-        uint32_t immlo = (uint32_t)(disp & 3) << 29;
-        uint32_t immhi = (uint32_t)((disp >> 2) & 0x7FFFF) << 5;
-        *instr_ptr = (instr & 0x9F00001F) | immlo | immhi;
-    }
-                    else if ((instr & 0xFF000000) == 0x54000000) {
-                        /* B.cond: 19-bit offset at bits 23:5 */
-                        int32_t imm19 = (int32_t)(displacement / 4) & 0x7FFFF;
-                        *instr_ptr = (instr & 0xFF00001F) | (imm19 << 5);
-                    }
-                    else if ((instr & 0x7C000000) == 0x14000000) {
-                        /* B or BL: 26-bit offset at bits 25:0 */
-                        int32_t imm26 = (int32_t)(displacement / 4) & 0x3FFFFFF;
+                    // Mask for B (0x14000000) and BL (0x94000000)
+                    if ((instr & 0x7C000000) == 0x14000000) {
+                        int64_t delta = (int64_t)target_addr - (int64_t)reloc_addr;
+                        /* imm26: bits 25:0, signed offset / 4 */
+                        int32_t imm26 = (int32_t)(delta / 4) & 0x03FFFFFF;
                         *instr_ptr = (instr & 0xFC000000) | imm26;
-                    }
-                    else {
-                        /* Default fallback for 32-bit relative relocations */
-                        *(int32_t *)(reloc_sec->data + rel->offset) = (int32_t)displacement;
                     }
                 }
                 else {
@@ -474,18 +461,16 @@ pulse_status _emit_resolve_relocations(emit_context_t * ctx) {
         else if (rel->size == 8) {
             if (rel->is_pc_relative)
                 *(int64_t *)(reloc_sec->data + rel->offset) = displacement;
+            else if (ctx->arch == EMIT_ARCH_AARCH64 && rel->inst_size == 16) {
+                /* Patch 4 MOVZ/MOVK instructions with 64-bit absolute address */
+                uint32_t * instrs = (uint32_t *)(reloc_sec->data + rel->offset);
+                instrs[0] = (instrs[0] & 0xFFE0001F) | (uint32_t)((target_addr & 0xFFFF) << 5);
+                instrs[1] = (instrs[1] & 0xFFE0001F) | (uint32_t)(((target_addr >> 16) & 0xFFFF) << 5);
+                instrs[2] = (instrs[2] & 0xFFE0001F) | (uint32_t)(((target_addr >> 32) & 0xFFFF) << 5);
+                instrs[3] = (instrs[3] & 0xFFE0001F) | (uint32_t)(((target_addr >> 48) & 0xFFFF) << 5);
+            }
             else {
-                if (ctx->arch == EMIT_ARCH_AARCH64 && rel->inst_size == 16) {
-                    /* Patch 4 MOVZ/MOVK instructions with 64-bit absolute address */
-                    uint32_t * instrs = (uint32_t *)(reloc_sec->data + rel->offset);
-                    instrs[0] = (instrs[0] & 0xFFE0001F) | (uint32_t)((target_addr & 0xFFFF) << 5);
-                    instrs[1] = (instrs[1] & 0xFFE0001F) | (uint32_t)(((target_addr >> 16) & 0xFFFF) << 5);
-                    instrs[2] = (instrs[2] & 0xFFE0001F) | (uint32_t)(((target_addr >> 32) & 0xFFFF) << 5);
-                    instrs[3] = (instrs[3] & 0xFFE0001F) | (uint32_t)(((target_addr >> 48) & 0xFFFF) << 5);
-                }
-                else {
-                    *(uint64_t *)(reloc_sec->data + rel->offset) = target_addr;
-                }
+                *(uint64_t *)(reloc_sec->data + rel->offset) = target_addr;
             }
         }
     }
@@ -637,14 +622,17 @@ PULSE_API pulse_status emit_math_mov_imm(emit_context_t * ctx, emit_register_t d
     case EMIT_ARCH_X86_64:
         return emit_x64_mov_imm(ctx, dest, imm);
     case EMIT_ARCH_AARCH64:
-    {
-        uint8_t rd = _emit_arm64_reg(dest);
-        EMIT_CHECK(emit_arm64_movz(ctx, rd, (uint16_t)(imm & 0xFFFF), 0, true));
-        if (imm > 0xFFFF) EMIT_CHECK(emit_arm64_movk(ctx, rd, (uint16_t)((imm >> 16) & 0xFFFF), 16, true));
-        if (imm > 0xFFFFFFFF) EMIT_CHECK(emit_arm64_movk(ctx, rd, (uint16_t)((imm >> 32) & 0xFFFF), 32, true));
-        if (imm > 0xFFFFFFFFFFFF) EMIT_CHECK(emit_arm64_movk(ctx, rd, (uint16_t)((imm >> 48) & 0xFFFF), 48, true));
-        return PULSE_SUCCESS;
-    }
+        {
+            uint8_t rd = _emit_arm64_reg(dest);
+            EMIT_CHECK(emit_arm64_movz(ctx, rd, (uint16_t)(imm & 0xFFFF), 0, true));
+            if (imm > 0xFFFF)
+                EMIT_CHECK(emit_arm64_movk(ctx, rd, (uint16_t)((imm >> 16) & 0xFFFF), 16, true));
+            if (imm > 0xFFFFFFFF)
+                EMIT_CHECK(emit_arm64_movk(ctx, rd, (uint16_t)((imm >> 32) & 0xFFFF), 32, true));
+            if (imm > 0xFFFFFFFFFFFF)
+                EMIT_CHECK(emit_arm64_movk(ctx, rd, (uint16_t)((imm >> 48) & 0xFFFF), 48, true));
+            return PULSE_SUCCESS;
+        }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -670,10 +658,10 @@ PULSE_API pulse_status emit_math_add(emit_context_t * ctx, emit_register_t dest,
     case EMIT_ARCH_X86_64:
         return emit_x64_add(ctx, dest, src);
     case EMIT_ARCH_AARCH64:
-    {
-        uint8_t rd = _emit_arm64_reg(dest);
-        return emit_arm64_add(ctx, rd, rd, _emit_arm64_reg(src));
-    }
+        {
+            uint8_t rd = _emit_arm64_reg(dest);
+            return emit_arm64_add(ctx, rd, rd, _emit_arm64_reg(src));
+        }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -686,10 +674,10 @@ PULSE_API pulse_status emit_math_add_imm(emit_context_t * ctx, emit_register_t d
     case EMIT_ARCH_X86_64:
         return emit_x64_add_imm(ctx, dest, imm);
     case EMIT_ARCH_AARCH64:
-    {
-        uint8_t rd = _emit_arm64_reg(dest);
-        return emit_arm64_add_imm(ctx, rd, rd, (int16_t)imm);
-    }
+        {
+            uint8_t rd = _emit_arm64_reg(dest);
+            return emit_arm64_add_imm(ctx, rd, rd, (int16_t)imm);
+        }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -702,10 +690,10 @@ PULSE_API pulse_status emit_math_sub(emit_context_t * ctx, emit_register_t dest,
     case EMIT_ARCH_X86_64:
         return emit_x64_sub(ctx, dest, src);
     case EMIT_ARCH_AARCH64:
-    {
-        uint8_t rd = _emit_arm64_reg(dest);
-        return emit_arm64_sub(ctx, rd, rd, _emit_arm64_reg(src));
-    }
+        {
+            uint8_t rd = _emit_arm64_reg(dest);
+            return emit_arm64_sub(ctx, rd, rd, _emit_arm64_reg(src));
+        }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -718,10 +706,10 @@ PULSE_API pulse_status emit_math_and(emit_context_t * ctx, emit_register_t dest,
     case EMIT_ARCH_X86_64:
         return emit_x64_and(ctx, dest, src);
     case EMIT_ARCH_AARCH64:
-    {
-        uint8_t rd = _emit_arm64_reg(dest);
-        return emit_arm64_and(ctx, rd, rd, _emit_arm64_reg(src));
-    }
+        {
+            uint8_t rd = _emit_arm64_reg(dest);
+            return emit_arm64_and(ctx, rd, rd, _emit_arm64_reg(src));
+        }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -734,10 +722,10 @@ PULSE_API pulse_status emit_math_or(emit_context_t * ctx, emit_register_t dest, 
     case EMIT_ARCH_X86_64:
         return emit_x64_or(ctx, dest, src);
     case EMIT_ARCH_AARCH64:
-    {
-        uint8_t rd = _emit_arm64_reg(dest);
-        return emit_arm64_orr(ctx, rd, rd, _emit_arm64_reg(src));
-    }
+        {
+            uint8_t rd = _emit_arm64_reg(dest);
+            return emit_arm64_orr(ctx, rd, rd, _emit_arm64_reg(src));
+        }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -750,10 +738,10 @@ PULSE_API pulse_status emit_math_xor(emit_context_t * ctx, emit_register_t dest,
     case EMIT_ARCH_X86_64:
         return emit_x64_xor(ctx, dest, src);
     case EMIT_ARCH_AARCH64:
-    {
-        uint8_t rd = _emit_arm64_reg(dest);
-        return emit_arm64_eor(ctx, rd, rd, _emit_arm64_reg(src));
-    }
+        {
+            uint8_t rd = _emit_arm64_reg(dest);
+            return emit_arm64_eor(ctx, rd, rd, _emit_arm64_reg(src));
+        }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -831,10 +819,13 @@ PULSE_API pulse_status emit_math_prologue(emit_context_t * ctx) {
     case EMIT_ARCH_X86_64:
         return emit_x64_prologue(ctx);
     case EMIT_ARCH_AARCH64:
+        /* stp x29, x30, [sp, #-16]! ; Pre-indexed: adjust SP then store FP and LR */
+        return emit_emit_u32(ctx, 0xA9BF7BFD);
+
         /* stp x29, x30, [sp, #-16]! ; mov x29, sp */
-        EMIT_CHECK(emit_emit_u32(ctx, 0xA9BF7BFD));
-        EMIT_CHECK(emit_emit_u32(ctx, 0x910003FD));
-        return PULSE_SUCCESS;
+        //~ EMIT_CHECK(emit_emit_u32(ctx, 0xA9BF7BFD));
+        //~ EMIT_CHECK(emit_emit_u32(ctx, 0x910003FD));
+        //~ return PULSE_SUCCESS;
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -847,10 +838,14 @@ PULSE_API pulse_status emit_math_epilogue(emit_context_t * ctx) {
     case EMIT_ARCH_X86_64:
         return emit_x64_epilogue(ctx);
     case EMIT_ARCH_AARCH64:
-        /* ldp x29, x30, [sp], #16 ; ret */
+        /* ldp x29, x30, [sp], #16 ; Post-indexed: load then adjust SP */
         EMIT_CHECK(emit_emit_u32(ctx, 0xA8C17BFD));
-        EMIT_CHECK(emit_arm64_ret(ctx, 30));
-        return PULSE_SUCCESS;
+        /* ret */
+        return emit_arm64_ret(ctx, 30);
+        //~ /* ldp x29, x30, [sp], #16 ; ret */
+        //~ EMIT_CHECK(emit_emit_u32(ctx, 0xA8C17BFD));
+        //~ EMIT_CHECK(emit_arm64_ret(ctx, 30));
+        //~ return PULSE_SUCCESS;
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -908,10 +903,10 @@ PULSE_API pulse_status emit_math_mul(emit_context_t * ctx, emit_register_t src) 
     case EMIT_ARCH_X86_64:
         return emit_x64_mul(ctx, src);
     case EMIT_ARCH_AARCH64:
-    {
-        uint8_t rs = _emit_arm64_reg(src);
-        return emit_arm64_mul(ctx, 0, 0, rs); // X0 = X0 * Xs
-    }
+        {
+            uint8_t rs = _emit_arm64_reg(src);
+            return emit_arm64_mul(ctx, 0, 0, rs);  // X0 = X0 * Xs
+        }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -924,12 +919,12 @@ PULSE_API pulse_status emit_math_imul_imm(emit_context_t * ctx, emit_register_t 
     case EMIT_ARCH_X86_64:
         return emit_x64_imul_imm(ctx, dest, imm);
     case EMIT_ARCH_AARCH64:
-    {
-        /* Use X16 as scratch to load immediate then multiply */
-        uint8_t rd = _emit_arm64_reg(dest);
-        EMIT_CHECK(emit_math_mov_imm(ctx, (emit_register_t)116, (uint64_t)imm)); // EMIT_REG_X16 is 116
-        return emit_arm64_mul(ctx, rd, rd, 16);
-    }
+        {
+            /* Use X16 as scratch to load immediate then multiply */
+            uint8_t rd = _emit_arm64_reg(dest);
+            EMIT_CHECK(emit_math_mov_imm(ctx, (emit_register_t)116, (uint64_t)imm));  // EMIT_REG_X16 is 116
+            return emit_arm64_mul(ctx, rd, rd, 16);
+        }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
@@ -949,49 +944,55 @@ PULSE_API pulse_status emit_math_test(emit_context_t * ctx, emit_register_t a, e
 }
 
 PULSE_API pulse_status emit_math_store_sym(emit_context_t * ctx, const char * sym, emit_register_t src) {
-    if (!ctx) return PULSE_ERROR_INVALID_ARGUMENT;
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
     switch (ctx->arch) {
     case EMIT_ARCH_X86_64:
         return emit_x64_store_sym(ctx, sym, src);
-    case EMIT_ARCH_AARCH64: {
-        uint8_t rs = _emit_arm64_reg(src);
-        uint64_t offset = ctx->current_section ? ctx->current_section->size : 0;
+    case EMIT_ARCH_AARCH64:
+        {
+            uint8_t rs = _emit_arm64_reg(src);
+            uint64_t offset = ctx->current_section ? ctx->current_section->size : 0;
 
-        /* Use X16 (IP0) as a temporary scratch register for the address */
-        /* ADR X16, label */
-        EMIT_CHECK(emit_emit_u32(ctx, 0x10000000 | 16));
+            /* Use X16 (IP0) as a temporary scratch register for the address */
+            /* ADR X16, label */
+            EMIT_CHECK(emit_emit_u32(ctx, 0x10000000 | 16));
 
-        /* STR Xs, [X16] (Store the value into the address) */
-        EMIT_CHECK(emit_arm64_str(ctx, 16, 0, rs));
+            /* STR Xs, [X16] (Store the value into the address) */
+            EMIT_CHECK(emit_arm64_str(ctx, 16, 0, rs));
 
-        EMIT_CHECK(_emit_add_relocation(ctx, sym, offset, 4, 4, true));
-        return PULSE_SUCCESS;
-    }
-    default: return PULSE_ERROR_NOT_IMPLEMENTED;
+            EMIT_CHECK(_emit_add_relocation(ctx, sym, offset, 4, 4, true));
+            return PULSE_SUCCESS;
+        }
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
 }
 
 PULSE_API pulse_status emit_math_load_sym(emit_context_t * ctx, emit_register_t dest, const char * sym) {
-    if (!ctx) return PULSE_ERROR_INVALID_ARGUMENT;
+    if (!ctx)
+        return PULSE_ERROR_INVALID_ARGUMENT;
     switch (ctx->arch) {
     case EMIT_ARCH_X86_64:
         return emit_x64_load_sym(ctx, dest, sym);
-    case EMIT_ARCH_AARCH64: {
-        uint8_t rd = _emit_arm64_reg(dest);
-        uint64_t offset = ctx->current_section ? ctx->current_section->size : 0;
+    case EMIT_ARCH_AARCH64:
+        {
+            uint8_t rd = _emit_arm64_reg(dest);
+            uint64_t offset = ctx->current_section ? ctx->current_section->size : 0;
 
-        /* ADR Xd, label (Load address of symbol relative to PC) */
-        /* Opcode: 0x10000000 | rd */
-        EMIT_CHECK(emit_emit_u32(ctx, 0x10000000 | (rd & 0x1F)));
+            /* ADR Xd, label (Load address of symbol relative to PC) */
+            /* Opcode: 0x10000000 | rd */
+            EMIT_CHECK(emit_emit_u32(ctx, 0x10000000 | (rd & 0x1F)));
 
-        /* LDR Xd, [Xd] (Actually fetch the VALUE from that address) */
-        EMIT_CHECK(emit_arm64_ldr(ctx, rd, rd, 0));
+            /* LDR Xd, [Xd] (Actually fetch the VALUE from that address) */
+            EMIT_CHECK(emit_arm64_ldr(ctx, rd, rd, 0));
 
-        /* Add relocation to patch the ADR instruction */
-        EMIT_CHECK(_emit_add_relocation(ctx, sym, offset, 4, 4, true));
-        return PULSE_SUCCESS;
-    }
-    default: return PULSE_ERROR_NOT_IMPLEMENTED;
+            /* Add relocation to patch the ADR instruction */
+            EMIT_CHECK(_emit_add_relocation(ctx, sym, offset, 4, 4, true));
+            return PULSE_SUCCESS;
+        }
+    default:
+        return PULSE_ERROR_NOT_IMPLEMENTED;
     }
 }
 
@@ -1042,10 +1043,10 @@ PULSE_API pulse_status emit_math_sub_imm(emit_context_t * ctx, emit_register_t d
     case EMIT_ARCH_X86_64:
         return emit_x64_sub_imm(ctx, dest, imm);
     case EMIT_ARCH_AARCH64:
-    {
-        uint8_t rd = _emit_arm64_reg(dest);
-        return emit_arm64_sub_imm(ctx, rd, rd, (int16_t)imm);
-    }
+        {
+            uint8_t rd = _emit_arm64_reg(dest);
+            return emit_arm64_sub_imm(ctx, rd, rd, (int16_t)imm);
+        }
     default:
         return PULSE_ERROR_NOT_IMPLEMENTED;
     }
