@@ -102,7 +102,7 @@ static int execute_jit_code(const uint8_t * code, size_t size, void ** out_code)
 }
 
 TEST {
-    plan(12);
+    plan(18);
 
     subtest("Context lifecycle") {
         plan(4);
@@ -300,7 +300,7 @@ TEST {
 #if defined(PULSE_ARCH_ARM64)
         plan(5);
 #else
-        plan(4);
+        plan(5);
 #endif
 
         emit_context_t * ctx = create_test_context();
@@ -372,6 +372,9 @@ TEST {
         (void)emit_emit_u64(ctx, 0);
         (void)emit_define_symbol(ctx, "result", EMIT_VISIBILITY_DEFAULT, false);
         (void)emit_emit_u64(ctx, 0);
+
+/* Ensure the next section (code) starts on a 4-byte boundary */
+emit_align(ctx, 4);
 
         uint64_t data_section_size;
         (void)emit_get_offset(ctx, &data_section_size);
@@ -953,7 +956,7 @@ TEST {
     }
 
     subtest("Relocations") {
-        plan(3);
+        plan(4);
 
         emit_context_t * ctx = create_test_context();
         ok(ctx != NULL, "emit_create returns non-NULL context");
