@@ -291,11 +291,19 @@ pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * o
     write_dos_stub(buf, pe_offset);
     *(uint32_t *)(buf + pe_offset) = IMAGE_NT_SIGNATURE;
     image_file_header_t * file_hdr = (image_file_header_t *)(buf + pe_offset + 4);
+
+
+
+
     file_hdr->Machine = pe_get_machine(ctx->arch);
     file_hdr->NumberOfSections = 2;
     file_hdr->TimeDateStamp = (uint32_t)time(NULL);
     file_hdr->SizeOfOptionalHeader = (uint16_t)opt_hdr_size;
     file_hdr->Characteristics = 0x0002;
+
+
+
+
 
     if (is_x64) {
         image_optional_header64_t * opt = (image_optional_header64_t *)(buf + pe_offset + 24);
@@ -303,7 +311,7 @@ pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * o
         opt->AddressOfEntryPoint = text_rva;
         opt->BaseOfCode = text_rva;
         opt->ImageBase = 0x140000000;
-        opt->SectionAlignment = 0x1000;
+        opt->SectionAlignment = 0x1000; // 4KB Pages
         opt->FileAlignment = 0x200;
         opt->MajorSubsystemVersion = 6;
         opt->SizeOfImage = (uint32_t)PE_ALIGN(rdata_rva + 128, 0x1000);
@@ -320,7 +328,7 @@ pulse_status emit_write_pe(emit_context_t * ctx, uint8_t ** out_data, size_t * o
         opt->AddressOfEntryPoint = text_rva;
         opt->BaseOfCode = text_rva;
         opt->ImageBase = 0x00400000;
-        opt->SectionAlignment = 0x1000;
+        opt->SectionAlignment = 0x1000; // 4KB Pages
         opt->FileAlignment = 0x200;
         opt->MajorSubsystemVersion = 6;
         opt->SizeOfImage = (uint32_t)PE_ALIGN(rdata_rva + 128, 0x1000);

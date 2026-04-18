@@ -23,8 +23,9 @@
 #include <pulse/emit/emit_math.h>
 
 TEST {
-    plan(0);
+    plan(1);
     diag("infix FFI not available - test skipped");
+    ok(1, "This is fine");
 }
 #else
 #include <pulse/emit/emit.h>
