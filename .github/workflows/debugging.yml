@@ -1,0 +1,202 @@
+name: Debugging Pipeline
+
+on:
+  pull_request: ~
+  push: ~
+  schedule:
+    - cron: '42 5 * * 0'
+  workflow_dispatch:
+    inputs:
+      run:
+        description: 'Which set of tests to run'
+        required: true
+        type: choice
+        default: 'all'
+        options:
+          - 'all'
+          - 'valgrind'
+          - 'fuzz'
+      fuzz_duration:
+        description: 'Fuzzing duration in seconds (for manual runs)'
+        required: false
+        default: '300'
+
+permissions:
+  contents: read
+  actions: read # Required to download artifacts in the summary job
+  checks: write
+
+jobs:
+  valgrind-memcheck:
+    name: Valgrind
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run == 'all' || github.event.inputs.run == 'valgrind'
+    uses: ./.github/workflows/debugging-valgrind.yml
+    with:
+      test-type: 'memcheck'
+
+  valgrind-fault-injection:
+    name: Valgrind
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run == 'all' || github.event.inputs.run == 'valgrind'
+    uses: ./.github/workflows/debugging-valgrind.yml
+    with:
+      test-type: 'fault-injection'
+
+  valgrind-helgrind:
+    name: Valgrind
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run == 'all' || github.event.inputs.run == 'valgrind'
+    uses: ./.github/workflows/debugging-valgrind.yml
+    with:
+      test-type: 'helgrind'
+
+  fuzz:
+    name: Fuzz ${{ matrix.harness }}
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run == 'all' || github.event.inputs.run == 'fuzz'
+    strategy:
+      fail-fast: false
+      matrix:
+        harness: [abi, types, trampoline, signature, direct, roundtrip]
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+        abi: [INFIX_FORCE_ABI_WINDOWS_X64, INFIX_FORCE_ABI_SYSV_X64, INFIX_FORCE_ABI_AAPCS64]
+    uses: ./.github/workflows/debugging-fuzz.yml
+    with:
+      harness: ${{ matrix.harness }}
+      os: ${{ matrix.os }}
+      abi: ${{ matrix.abi }}
+      # Pass the duration from the manual input, or use the default 300s for other events.
+      fuzz-duration: ${{ github.event.inputs.fuzz_duration || '300' }}
+
+  verify-fuzz-fix:
+    name: Verify Fuzz Crash Regression
+    if: failure()
+    needs: [fuzz]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code with Fix
+        uses: actions/checkout@v6.0.0
+
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang perl
+
+      - name: Download all crash artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: crash-artifact-*
+          path: crash_artifacts/
+          merge-multiple: true
+
+      - name: Build All Fuzzer Harnesses
+        run: |
+          perl build.pl fuzz:types      --compiler=clang
+          perl build.pl fuzz:trampoline --compiler=clang
+          perl build.pl fuzz:signature  --compiler=clang
+          perl build.pl fuzz:abi        --compiler=clang
+          perl build.pl fuzz:direct     --compiler=clang
+          perl build.pl fuzz:roundtrip  --compiler=clang
+
+      - name: Run Regression Test on All Found Crashes
+        id: regression-test
+        run: |
+          set -e # Exit immediately if any command fails
+
+          if [ ! -d "crash_artifacts" ] || [ -z "$(ls -A crash_artifacts)" ]; then
+              echo "No crash artifacts found to verify. This may indicate the failure was not in the fuzzing step itself."
+              exit 0
+          fi
+
+          echo "Verifying that the fix prevents crashes for all found inputs..."
+
+          for dir in crash_artifacts/*; do
+            if [ -d "$dir" ]; then
+              dirname=$(basename "$dir")
+              harness=$(echo "$dirname" | cut -d, -f2)
+
+              echo "--- Verifying crashes from harness: $harness ---"
+              harness_exe="./fuzz_${harness}_harness"
+
+              if [ ! -f "$harness_exe" ]; then
+                echo "::error::Harness executable $harness_exe not found!"
+                exit 1
+              fi
+
+              for crash_file in "$dir"/*; do
+                if [ -f "$crash_file" ]; then
+                  echo "Testing with: $crash_file"
+                  $harness_exe "$crash_file"
+                fi
+              done
+            fi
+          done
+
+          echo "Success! All previously crashing inputs are now handled safely."
+
+      - name: Report Regression Test Status
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            // Get the outcome of the regression test step ('success' or 'failure')
+            const regression_outcome = '${{ steps.regression-test.outcome }}';
+
+            // The 'status' of a check run must be 'completed' to have a conclusion.
+            const check_status = 'completed';
+
+            // The 'conclusion' must be one of the allowed outcome strings.
+            const check_conclusion = regression_outcome;
+
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Fuzzing Regression Test',
+              head_sha: context.sha,
+              status: check_status,
+              conclusion: check_conclusion,
+              output: {
+                title: (check_conclusion === 'success') ? '✅ All fixes verified' : '❌ Regression detected',
+                summary: (check_conclusion === 'success') ? 'All previously crashing inputs are now handled safely by the new code.' : 'A previously found crash is STILL OCCURRING with the new code. The fix is incomplete.'
+              }
+            });
+
+  summary:
+    name: Summary
+    if: always()
+    needs: [valgrind-memcheck, valgrind-fault-injection, valgrind-helgrind, fuzz, verify-fuzz-fix]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all result artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: result-artifact-*
+          path: results/
+          merge-multiple: true
+
+      - name: Generate Job Summary
+        shell: bash
+        run: |
+          echo "## Fuzzing & Valgrind Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Category | Test / Harness | OS (Arch) | ABI / Compiler | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|:---|:---|:---|:---|:---|" >> $GITHUB_STEP_SUMMARY
+
+          if [ ! -d "results" ] || [ -z "$(ls -A results)" ]; then
+              echo "| All Jobs | - | - | - | ❌ No result artifacts found |" >> $GITHUB_STEP_SUMMARY
+              exit 0
+          fi
+
+          find results -type f -name "*.result" | sort | while IFS= read -r file; do
+              result=$(cat "$file")
+              filename=$(basename "$file" .result)
+              ICON=$([[ $result == 'success' ]] && echo '✅' || echo '❌')
+
+              if [[ "$filename" == *,* ]]; then # Comma-separated format for fuzzing results
+                  IFS=',' read -r category_slug harness os abi <<< "$filename"
+                  category="Fuzzing"
+                  echo "| **$category** | \`$harness\` | \`$os\` | \`$abi\` | $ICON $result |" >> $GITHUB_STEP_SUMMARY
+              else # Dash-separated format for Valgrind results
+                  IFS='-' read -ra parts <<< "$filename"
+                  category="Valgrind"
+                  test_name="${parts[1]}"
+                  arch="${parts[2]}"
+                  compiler="${parts[3]}"
+                  test_name_pretty=$(echo "$test_name" | sed 's/_/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)} 1')
+                  echo "| **$category** | $test_name_pretty | \`$arch\` | \`$compiler\` | $ICON $result |" >> $GITHUB_STEP_SUMMARY
+              fi
+          done
