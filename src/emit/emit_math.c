@@ -265,7 +265,7 @@ static pulse_status emit_emit_bytes(emit_context_t * ctx, const void * data, siz
     return PULSE_SUCCESS;
 }
 
-PULSE_API pulse_status __attribute__((warn_unused_result)) emit_emit_u8(emit_context_t * ctx, uint8_t byte) {
+PULSE_API pulse_status emit_emit_u8(emit_context_t * ctx, uint8_t byte) {
     return emit_emit_bytes(ctx, &byte, 1);
 }
 
@@ -274,7 +274,7 @@ PULSE_API pulse_status emit_emit_u16(emit_context_t * ctx, uint16_t value) {
     return emit_emit_bytes(ctx, bytes, 2);
 }
 
-PULSE_API pulse_status __attribute__((warn_unused_result)) emit_emit_u32(emit_context_t * ctx, uint32_t value) {
+PULSE_API pulse_status emit_emit_u32(emit_context_t * ctx, uint32_t value) {
     uint8_t bytes[4] = {(uint8_t)(value & 0xFF),
                         (uint8_t)((value >> 8) & 0xFF),
                         (uint8_t)((value >> 16) & 0xFF),

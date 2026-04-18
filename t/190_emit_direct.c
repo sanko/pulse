@@ -433,6 +433,8 @@ static void pulse_emit_call(
 #ifdef _WIN32
     padding += 32;
 #endif
+    padding = (padding + 15) & ~15;
+
     if (padding > 0)
         emit_math_sub_imm(ctx, REG_SP, (int32_t)padding);
     for (size_t i = 0; i < num_args && i < ABI_GPR_COUNT; i++) {
