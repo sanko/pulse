@@ -1,0 +1,19 @@
+<map id="src/common/infix_internals.h" name="src/common/infix_internals.h">
+<area shape="rect" id="Node000001" title="Internal data structures, function prototypes, and constants." alt="" coords="261,5,471,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,175,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="322,33,149,78,147,73,321,28"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="199,79,349,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="353,33,301,72,298,68,350,29"/>
+<area shape="rect" id="Node000004" href="$pulse__common_8h.html" title="Common types and definitions shared across the pulse library." alt="" coords="373,79,545,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="383,29,435,68,432,72,379,33"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="569,79,653,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="406,28,559,72,558,77,405,33"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="266,152,349,177"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="436,106,345,149,343,144,434,102"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="373,152,447,177"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="453,106,428,142,424,139,449,103"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="472,152,543,177"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="469,103,494,139,490,142,465,106"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="567,152,637,177"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="483,102,568,143,565,148,481,106"/>
+</map>

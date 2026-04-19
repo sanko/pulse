@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['r_5faddend_0',['r_addend',['../structElf64__Rela.html#a1106f1198900e4975aae9a314dd9effa',1,'Elf64_Rela']]],
+  ['r_5foffset_1',['r_offset',['../structElf64__Rela.html#a52fcd08235197c4989940ce3d9867c99',1,'Elf64_Rela']]],
+  ['r_5fsym_2',['r_sym',['../structElf64__Rela.html#a079693cc7aa6ec3e345f858a63f76b75',1,'Elf64_Rela']]],
+  ['r_5ftype_3',['r_type',['../structElf64__Rela.html#ab82a0ffbe70c4326c20a61e642cc9449',1,'Elf64_Rela']]],
+  ['rbp_4',['rbp',['../structpulse__exception__handler.html#add17b119867e1e98579cf3db5db881b8',1,'pulse_exception_handler']]],
+  ['ref_5fcount_5',['ref_count',['../structinfix__forward__t.html#a9f9307241cfd8a409784a138590b7518',1,'infix_forward_t']]],
+  ['refcount_6',['refcount',['../structvm__object.html#a04896aef8a1b5850d7e9c892f598b8e5',1,'vm_object']]],
+  ['reg_5findex_7',['reg_index',['../structinfix__arg__location.html#a4ca356cdf0cdc055bde2bb312278559a',1,'infix_arg_location']]],
+  ['reg_5findex2_8',['reg_index2',['../structinfix__arg__location.html#aa26753e6a3c286d4c3e1510c9c187c84',1,'infix_arg_location']]],
+  ['relocations_9',['relocations',['../structemit__context.html#a33fd0b3398939fa6adf7f10c2dcf19de',1,'emit_context']]],
+  ['return_5faddress_10',['return_address',['../structvm__frame.html#a4e4f9ff11a50cfcf482f9635b1065797',1,'vm_frame']]],
+  ['return_5fbuffer_5foffset_11',['return_buffer_offset',['../structinfix__reverse__call__frame__layout.html#afd245f8bdd79ae7fd8dc55fba7de58e7',1,'infix_reverse_call_frame_layout']]],
+  ['return_5fstmt_12',['return_stmt',['../structast__node.html#a14abc876ef1d902c9cca011a781dc389',1,'ast_node']]],
+  ['return_5ftype_13',['return_type',['../structinfix__forward__t.html#a05eb743d61ed27e37a8b0682d7e2f543',1,'infix_forward_t::return_type'],['../structtype.html#a018589d21f3bd448e8b4f7ecdc9a0378',1,'type::return_type'],['../structinfix__reverse__t.html#a271b908b7f3e57374179301e9c548162',1,'infix_reverse_t::return_type']]],
+  ['return_5fvalue_5fin_5fmemory_14',['return_value_in_memory',['../structinfix__call__frame__layout.html#aaed0abd0984cf01711d0ac17731dd97d',1,'infix_call_frame_layout::return_value_in_memory'],['../structinfix__direct__call__frame__layout.html#aa486d9070d910918dd440e919ff79126',1,'infix_direct_call_frame_layout::return_value_in_memory']]],
+  ['right_15',['right',['../structast__node.html#a2ad943ea3e7646fafdf56dfe7bdc8a8f',1,'ast_node']]],
+  ['root_5fcount_16',['root_count',['../structpulse__vm.html#aafbfc93dfdd9e5190cdbc79c9c964abf',1,'pulse_vm']]],
+  ['roots_17',['roots',['../structpulse__vm.html#a024a7af37ff5d0d2367f7a8b8c4937dd',1,'pulse_vm']]],
+  ['rsp_18',['rsp',['../structpulse__fiber.html#afb1be7e74debbef936cdba6bb2a08982',1,'pulse_fiber::rsp'],['../structpulse__exception__handler.html#a54e5851ae066f512d8fb31eba0a0efde',1,'pulse_exception_handler::rsp']]],
+  ['rw_5fptr_19',['rw_ptr',['../structinfix__executable__t.html#af9a2a93cf175feed6882ba7bcf78a566',1,'infix_executable_t::rw_ptr'],['../structinfix__protected__t.html#a05983c5a8ac679964ccc97d9bc7f6749',1,'infix_protected_t::rw_ptr']]],
+  ['rx_5fptr_20',['rx_ptr',['../structinfix__executable__t.html#a214f9e05da3f0a69861e8d39038c18f1',1,'infix_executable_t']]]
+];

@@ -1,0 +1,17 @@
+<map id="sema_t" name="sema_t">
+<area shape="rect" id="Node000001" title=" " alt="" coords="57,424,127,449"/>
+<area shape="rect" id="Node000002" href="$structscope.html" title=" " alt="" coords="237,319,297,345"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,354,113,426,111,421,234,349"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="312,322,320,325,323,332,315,341,297,343,297,338,313,336,318,332,316,329,310,327"/>
+<area shape="rect" id="Node000003" href="$structsymbol.html" title=" " alt="" coords="85,229,155,255"/>
+<area shape="poly" id="edge10_Node000001_Node000003" title=" " alt="" coords="117,269,108,318,96,424,90,424,103,317,112,268"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="152,259,249,317,246,322,149,264"/>
+<area shape="poly" id="edge8_Node000003_Node000003" title=" " alt="" coords="170,233,178,236,182,242,174,251,156,253,156,247,171,246,177,242,175,240,169,238"/>
+<area shape="rect" id="Node000004" href="$structtype.html" title=" " alt="" coords="5,73,56,99"/>
+<area shape="poly" id="edge9_Node000001_Node000004" title=" " alt="" coords="37,112,67,293,92,423,87,424,61,294,32,113"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="46,109,116,228,111,230,42,112"/>
+<area shape="poly" id="edge5_Node000004_Node000004" title=" " alt="" coords="53,64,63,62,73,66,80,74,83,86,79,101,68,109,54,109,40,101,43,96,55,103,66,104,74,98,77,86,75,76,70,70,63,68,54,69"/>
+<area shape="rect" id="Node000005" href="$structast__node.html" title=" " alt="" coords="199,73,281,99"/>
+<area shape="poly" id="edge6_Node000003_Node000005" title=" " alt="" coords="228,112,189,168,133,231,129,227,185,165,223,109"/>
+<area shape="poly" id="edge7_Node000005_Node000005" title=" " alt="" coords="266,65,280,62,294,65,304,73,307,86,302,101,288,109,271,109,253,101,255,96,272,103,287,104,298,98,302,86,299,76,292,70,280,68,267,70"/>
+</map>

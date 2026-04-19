@@ -1,0 +1,7 @@
+<map id="constant" name="constant">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,112,84,137"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="98,115,107,118,111,125,102,133,85,135,84,130,100,128,105,124,104,123,97,120"/>
+<area shape="rect" id="Node000002" href="$structtype.html" title=" " alt="" coords="19,15,70,40"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="47,54,47,112,42,112,42,54"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="85,16,93,20,97,28,88,38,70,40,70,34,86,33,91,27,89,23,83,21"/>
+</map>

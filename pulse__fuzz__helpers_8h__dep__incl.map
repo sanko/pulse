@@ -1,0 +1,7 @@
+<map id="fuzz/pulse_fuzz_helpers.h" name="fuzz/pulse_fuzz_helpers.h">
+<area shape="rect" id="Node000001" title="Common helper functions for Pulse fuzzers." alt="" coords="51,5,240,31"/>
+<area shape="rect" id="Node000002" href="$fuzz__emit_8c.html" title="Fuzzer for the Pulse emit library (JIT code generation)." alt="" coords="5,79,133,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,42,84,80,80,76,121,38"/>
+<area shape="rect" id="Node000003" href="$fuzz__lexer_8c.html" title="Fuzzer for the Pulse lexer/tokenizer." alt="" coords="158,79,287,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="170,38,212,76,208,80,166,42"/>
+</map>

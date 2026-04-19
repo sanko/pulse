@@ -1,0 +1,27 @@
+<map id="src/emit/emit_internals.h" name="src/emit/emit_internals.h">
+<area shape="rect" id="Node000001" title="Internal structures for the emit JIT code generation system." alt="" coords="265,5,450,31"/>
+<area shape="rect" id="Node000002" href="$emit_8h.html" title="Public API for the emit JIT code generation system." alt="" coords="127,152,265,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,33,228,51,210,64,196,80,189,94,187,108,191,138,185,139,182,108,184,92,191,77,207,60,226,46,268,28"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,299,88,324"/>
+<area shape="poly" id="edge13_Node000001_Node000004" title=" " alt="" coords="306,33,254,49,195,74,138,108,112,129,90,154,68,187,56,226,51,256,49,285,44,284,45,256,51,225,63,185,86,150,109,126,135,104,193,69,252,44,304,28"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="299,299,370,324"/>
+<area shape="poly" id="edge14_Node000001_Node000006" title=" " alt="" coords="370,29,386,51,399,78,400,91,399,104,388,156,374,207,347,287,342,285,369,205,383,155,393,104,395,91,393,79,381,54,366,33"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="422,299,493,324"/>
+<area shape="poly" id="edge16_Node000001_Node000007" title=" " alt="" coords="375,29,398,50,418,77,440,133,453,191,459,244,460,285,455,285,453,244,447,192,435,135,414,80,394,53,372,33"/>
+<area shape="rect" id="Node000008" href="$emit__math_8h.html" title="Math operations for JIT code generation." alt="" coords="205,79,384,104"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="349,33,316,70,312,66,345,29"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="510,79,581,104"/>
+<area shape="poly" id="edge15_Node000001_Node000009" title=" " alt="" coords="388,28,503,71,501,76,387,33"/>
+<area shape="rect" id="Node000003" href="$pulse__common_8h.html" title="Common types and definitions shared across the pulse library." alt="" coords="110,225,282,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="199,178,199,212,193,212,193,178"/>
+<area shape="poly" id="edge7_Node000002_Node000004" title=" " alt="" coords="171,180,135,200,99,227,76,257,59,287,55,285,72,254,95,223,132,195,168,175"/>
+<area shape="poly" id="edge8_Node000002_Node000006" title=" " alt="" coords="225,175,260,195,295,224,316,254,329,284,324,286,311,256,291,227,257,199,222,180"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="173,253,85,295,82,290,171,248"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="159,299,233,324"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="199,251,199,285,193,285,193,251"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="219,248,301,290,299,295,217,253"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="239,248,409,294,408,299,237,253"/>
+<area shape="poly" id="edge10_Node000008_Node000002" title=" " alt="" coords="280,106,225,146,222,142,277,102"/>
+<area shape="poly" id="edge11_Node000008_Node000004" title=" " alt="" coords="223,107,168,124,141,138,116,154,90,184,72,219,60,255,53,286,48,284,54,253,67,217,86,181,113,150,138,133,166,119,221,102"/>
+<area shape="poly" id="edge12_Node000008_Node000006" title=" " alt="" coords="300,104,324,225,334,284,328,285,319,226,295,105"/>
+</map>

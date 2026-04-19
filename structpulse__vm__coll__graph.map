@@ -1,0 +1,11 @@
+<map id="pulse_vm" name="pulse_vm">
+<area shape="rect" id="Node000001" title=" " alt="" coords="164,181,249,207"/>
+<area shape="rect" id="Node000002" href="$structpulse__exception__handler.html" title=" " alt="" coords="5,93,189,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,125,193,179,190,183,121,129"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="205,98,216,106,208,113,190,116,189,111,206,108,211,106,202,103"/>
+<area shape="rect" id="Node000003" href="$structpulse__fiber.html" title=" " alt="" coords="271,93,364,119"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="293,129,223,183,220,179,290,125"/>
+<area shape="rect" id="Node000004" href="$structgc__header.html" title=" " alt="" coords="273,5,362,31"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="320,45,320,93,315,93,315,45"/>
+<area shape="poly" id="edge5_Node000004_Node000004" title=" " alt="" coords="377,9,385,12,389,18,380,26,363,29,362,23,378,21,383,18,382,16,375,14"/>
+</map>

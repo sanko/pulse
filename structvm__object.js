@@ -1,0 +1,25 @@
+var structvm__object =
+[
+    [ "array", "structvm__object.html#af8eb2524653a73b91453e5a2cc22deec", null ],
+    [ "capacity", "structvm__object.html#a4530e8a1c8dff2c5f6d0ecab50ce50db", null ],
+    [ "class", "structvm__object.html#a8fa0f5aabedd7b32eace1c8bb4a64b43", null ],
+    [ "count", "structvm__object.html#aab15f477051ebab1c354312a1e2ab131", null ],
+    [ "data", "structvm__object.html#afcdd91ae962391dfc32ba92c94ab2d28", null ],
+    [ "data", "structvm__object.html#ad69b768d7bc9bf8c86d1d4e85e84218f", null ],
+    [ "fiber", "structvm__object.html#aff9a51878fca4e516544e0dc23ac5205", null ],
+    [ "fields", "structvm__object.html#a45c2279f3823fdf7602da90ac9259907", null ],
+    [ "function", "structvm__object.html#ae0a45f094141ceb4f02ceaabaa10c2a3", null ],
+    [ "instance", "structvm__object.html#adea73cdfc24ae45c893ea1553a6758d8", null ],
+    [ "ip", "structvm__object.html#a75f83f7701f4c7120101fa181f281376", null ],
+    [ "keys", "structvm__object.html#a39e82db1fe0e89d3f4d749b3e2a4f199", null ],
+    [ "length", "structvm__object.html#a1d9373a7ec6e63919807ebc920cdb839", null ],
+    [ "locals", "structvm__object.html#ad236d1ca4a653398b3d043b40d97e6e9", null ],
+    [ "next", "structvm__object.html#a61458840ff99ba3d96b0ab3a3f368537", null ],
+    [ "object", "structvm__object.html#afd809f84c0d9b327479221ee6e414c94", null ],
+    [ "refcount", "structvm__object.html#a04896aef8a1b5850d7e9c892f598b8e5", null ],
+    [ "stack", "structvm__object.html#a02ce75067c23c7bc8601975c7d93e9cc", null ],
+    [ "status", "structvm__object.html#a5a8e580ace2bd8da15c4ad9b056256a9", null ],
+    [ "string", "structvm__object.html#a9f97af363994113cf8315789261b5eca", null ],
+    [ "type", "structvm__object.html#ab9d21ae5bb1457cd681506cc1ee5e8ac", null ],
+    [ "values", "structvm__object.html#ad65adea40eacb1e44877f6b60832112e", null ]
+];

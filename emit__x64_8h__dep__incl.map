@@ -1,0 +1,10 @@
+<map id="src/emit/x64/emit_x64.h" name="src/emit/x64/emit_x64.h">
+<area shape="rect" id="Node000001" title="x86&#45;64 instruction encoding declarations." alt="" coords="93,5,273,31"/>
+<area shape="rect" id="Node000002" href="$emit__math_8c.html" title="Implementation of the emit API for generating machine code." alt="" coords="5,79,167,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="158,41,103,81,100,76,155,37"/>
+<area shape="rect" id="Node000004" href="$emit__x64_8c.html" title="x86&#45;64 instruction encoding implementation." alt="" coords="191,79,370,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="212,37,266,76,263,81,209,41"/>
+<area shape="rect" id="Node000003" href="$pulse_8c.html" title=" " alt="" coords="138,152,229,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="114,110,169,150,166,154,111,114"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="255,114,201,154,198,150,252,110"/>
+</map>

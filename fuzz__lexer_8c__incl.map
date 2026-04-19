@@ -1,0 +1,24 @@
+<map id="fuzz/fuzz_lexer.c" name="fuzz/fuzz_lexer.c">
+<area shape="rect" id="Node000001" title="Fuzzer for the Pulse lexer/tokenizer." alt="" coords="311,5,441,31"/>
+<area shape="rect" id="Node000002" href="$pulse_8h.html" title=" " alt="" coords="101,79,209,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="341,33,204,77,202,72,340,28"/>
+<area shape="rect" id="Node000006" href="$pulse__fuzz__helpers_8h.html" title="Common helper functions for Pulse fuzzers." alt="" coords="238,79,397,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="368,33,337,70,333,67,364,29"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="401,152,468,177"/>
+<area shape="poly" id="edge12_Node000001_Node000007" title=" " alt="" coords="385,30,410,78,431,137,426,139,406,80,381,32"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="493,152,563,177"/>
+<area shape="poly" id="edge13_Node000001_Node000009" title=" " alt="" coords="390,29,508,141,504,144,387,33"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,152,88,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="139,106,77,147,74,142,136,102"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="112,152,187,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="156,105,154,139,149,138,151,104"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="211,152,282,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="171,102,223,141,219,146,168,106"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="275,107,102,152,101,146,273,101"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="291,106,190,149,188,144,289,102"/>
+<area shape="poly" id="edge8_Node000006_Node000005" title=" " alt="" coords="308,106,270,144,266,140,304,102"/>
+<area shape="poly" id="edge9_Node000006_Node000007" title=" " alt="" coords="338,102,405,142,402,147,335,106"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="306,152,377,177"/>
+<area shape="poly" id="edge10_Node000006_Node000008" title=" " alt="" coords="324,103,336,138,331,140,319,105"/>
+<area shape="poly" id="edge11_Node000006_Node000009" title=" " alt="" coords="352,101,482,145,480,150,350,107"/>
+</map>

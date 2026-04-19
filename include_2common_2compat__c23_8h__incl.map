@@ -1,0 +1,9 @@
+<map id="include/common/compat_c23.h" name="include/common/compat_c23.h">
+<area shape="rect" id="Node000001" title="Provides forward compatibility macros for C23 features." alt="" coords="149,5,332,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,175,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,48,126,89,123,84,203,43"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="199,93,282,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="243,46,243,79,238,79,238,46"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="306,93,381,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="267,43,319,83,316,87,264,48"/>
+</map>

@@ -1,0 +1,75 @@
+<map id="include/pulse/pulse_common.h" name="include/pulse/pulse_common.h">
+<area shape="rect" id="Node000001" title="Common types and definitions shared across the pulse library." alt="" coords="1369,5,1516,45"/>
+<area shape="rect" id="Node000002" href="$include_2common_2infix__internals_8h.html" title="Internal data structures, function prototypes, and constants." alt="" coords="643,93,805,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1356,36,1113,59,819,96,806,98,805,93,818,91,1113,54,1355,31"/>
+<area shape="rect" id="Node000003" href="$emit_8h.html" title="Public API for the emit JIT code generation system." alt="" coords="830,93,973,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1356,43,973,103,973,98,1355,38"/>
+<area shape="rect" id="Node000013" href="$180__emit_8c.html" title="Unit test for the emit API (JIT compiler and Executable builder suite)." alt="" coords="1251,438,1354,463"/>
+<area shape="poly" id="edge49_Node000001_Node000013" title=" " alt="" coords="1460,57,1484,122,1492,160,1496,200,1496,284,1491,314,1479,341,1460,365,1437,386,1385,419,1337,440,1335,435,1382,414,1433,381,1456,361,1474,338,1486,312,1491,283,1491,200,1487,161,1478,123,1455,59"/>
+<area shape="rect" id="Node000017" href="$190__emit__direct_8c.html" title="Unified Test Suite: Infix Emit API &amp; Pulse Language Compiler." alt="" coords="1029,350,1176,375"/>
+<area shape="poly" id="edge50_Node000001_Node000017" title=" " alt="" coords="1446,59,1443,111,1432,175,1422,208,1409,240,1391,270,1368,297,1336,315,1288,331,1177,354,1176,348,1286,326,1334,310,1365,293,1387,267,1404,238,1417,206,1427,174,1438,111,1441,59"/>
+<area shape="rect" id="Node000019" href="$200__ffi_8c.html" title="Test Suite: Infix FFI Integration (Optional)" alt="" coords="1267,269,1354,295"/>
+<area shape="poly" id="edge51_Node000001_Node000019" title=" " alt="" coords="1429,59,1319,270,1314,268,1424,56"/>
+<area shape="rect" id="Node000021" href="$error_8c.html" title="Error handling implementation for the pulse library." alt="" coords="1531,189,1677,214"/>
+<area shape="poly" id="edge46_Node000001_Node000021" title=" " alt="" coords="1475,53,1514,92,1597,187,1593,190,1510,95,1471,57"/>
+<area shape="rect" id="Node000022" href="$src_2common_2infix__internals_8h.html" title="Internal data structures, function prototypes, and constants." alt="" coords="1581,101,1792,126"/>
+<area shape="poly" id="edge48_Node000001_Node000022" title=" " alt="" coords="1510,47,1655,98,1653,103,1508,52"/>
+<area shape="rect" id="Node000004" href="$fuzz__emit_8c.html" title="Fuzzer for the Pulse emit library (JIT code generation)." alt="" coords="395,269,523,295"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="839,141,490,272,488,267,837,136"/>
+<area shape="rect" id="Node000005" href="$emit__math_8h.html" title="Math operations for JIT code generation." alt="" coords="830,181,973,221"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="904,147,904,181,899,181,899,147"/>
+<area shape="rect" id="Node000006" href="$emit__arm64_8h.html" title="ARM64 (AArch64) instruction encoding declarations." alt="" coords="293,343,459,383"/>
+<area shape="poly" id="edge33_Node000003_Node000006" title=" " alt="" coords="817,136,722,143,610,148,505,160,463,170,431,184,408,201,394,219,376,270,372,308,375,342,369,343,366,308,371,269,389,217,404,197,428,179,461,165,504,154,610,143,722,138,816,130"/>
+<area shape="rect" id="Node000009" href="$emit__math_8c.html" title="Implementation of the emit API for generating machine code." alt="" coords="442,438,603,463"/>
+<area shape="poly" id="edge36_Node000003_Node000009" title=" " alt="" coords="817,136,712,143,588,147,470,158,423,168,387,184,326,226,301,249,281,273,267,299,262,325,267,352,283,381,307,393,355,408,469,435,468,441,353,413,305,398,279,385,262,354,257,325,262,297,276,270,297,245,323,222,384,179,421,163,470,153,588,142,712,137,816,130"/>
+<area shape="rect" id="Node000010" href="$emit__internals_8h.html" title="Internal structures for the emit JIT code generation system." alt="" coords="699,269,885,295"/>
+<area shape="poly" id="edge35_Node000003_Node000010" title=" " alt="" coords="860,144,839,162,821,183,810,205,802,229,795,270,790,269,797,228,805,203,816,180,835,158,856,139"/>
+<area shape="rect" id="Node000011" href="$emit__elf_8c.html" title="ELF (Executable and Linkable Format) binary format support." alt="" coords="858,438,1022,463"/>
+<area shape="poly" id="edge34_Node000003_Node000011" title=" " alt="" coords="987,127,1050,147,1082,161,1111,179,1150,213,1172,249,1184,290,1191,342,1195,364,1195,374,1190,384,1164,403,1122,419,1023,441,1022,435,1121,414,1161,399,1186,381,1190,372,1190,364,1185,343,1179,291,1168,251,1146,217,1108,183,1079,166,1048,152,985,132"/>
+<area shape="poly" id="edge42_Node000003_Node000013" title=" " alt="" coords="987,112,1054,116,1131,127,1210,148,1285,179,1316,197,1338,214,1354,237,1369,268,1375,293,1375,318,1369,343,1360,368,1337,410,1315,439,1310,436,1332,407,1355,365,1364,342,1369,318,1370,294,1364,270,1350,239,1334,218,1313,201,1283,184,1209,153,1130,133,1054,122,986,117"/>
+<area shape="rect" id="Node000014" href="$emit__pe_8c.html" title="PE (Portable Executable) binary format support for emit system." alt="" coords="5,350,168,375"/>
+<area shape="poly" id="edge37_Node000003_Node000014" title=" " alt="" coords="817,136,719,146,635,148,492,142,423,140,352,145,273,158,181,184,135,198,99,212,70,234,44,270,40,291,47,312,61,332,76,348,72,352,57,336,42,315,35,292,39,268,66,230,97,208,133,193,179,179,271,153,351,140,423,135,492,136,635,142,719,140,816,131"/>
+<area shape="rect" id="Node000015" href="$emit__x64_8h.html" title="x86&#45;64 instruction encoding declarations." alt="" coords="534,350,714,375"/>
+<area shape="poly" id="edge41_Node000003_Node000015" title=" " alt="" coords="817,136,623,184,584,193,549,198,487,205,459,212,434,223,409,242,385,271,380,282,385,293,409,310,449,325,546,347,544,353,447,331,406,315,381,296,375,282,380,268,405,238,431,219,458,207,486,200,548,193,583,188,622,179,816,131"/>
+<area shape="poly" id="edge44_Node000003_Node000017" title=" " alt="" coords="980,136,1028,156,1077,185,1121,222,1140,244,1156,268,1160,292,1151,315,1136,335,1119,351,1116,348,1132,332,1146,312,1154,291,1151,270,1136,247,1118,226,1074,189,1025,161,978,141"/>
+<area shape="rect" id="Node000018" href="$185__emit__file_8c.html" title="Unit test for emit_write_file() &#45; generates and runs executables." alt="" coords="1011,269,1141,295"/>
+<area shape="poly" id="edge43_Node000003_Node000018" title=" " alt="" coords="940,140,987,179,1034,227,1069,267,1064,271,1030,231,984,183,936,144"/>
+<area shape="poly" id="edge45_Node000003_Node000019" title=" " alt="" coords="987,121,1135,143,1203,159,1249,179,1272,200,1289,224,1309,268,1305,270,1284,227,1268,203,1247,184,1201,164,1134,148,986,126"/>
+<area shape="rect" id="Node000020" href="$emit__pe_8h.html" title="PE (Portable Executable) format writer for Windows." alt="" coords="54,269,218,295"/>
+<area shape="poly" id="edge38_Node000003_Node000020" title=" " alt="" coords="817,136,680,144,515,147,356,157,290,168,238,184,208,202,182,226,146,271,142,267,178,222,205,198,236,179,288,162,355,152,514,142,680,138,817,130"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="817,220,523,272,523,267,816,215"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="817,219,709,240,593,272,564,284,536,297,422,345,420,340,534,292,562,279,591,267,708,235,816,214"/>
+<area shape="poly" id="edge27_Node000005_Node000009" title=" " alt="" coords="817,224,732,245,643,274,568,307,541,326,524,344,515,368,514,394,521,437,516,438,508,394,510,367,519,341,537,321,565,303,641,269,731,240,816,218"/>
+<area shape="poly" id="edge11_Node000005_Node000010" title=" " alt="" coords="865,232,810,271,807,267,862,227"/>
+<area shape="poly" id="edge29_Node000005_Node000013" title=" " alt="" coords="927,230,960,263,1000,292,1026,305,1050,311,1094,316,1137,321,1162,328,1189,340,1223,363,1253,389,1296,436,1292,439,1250,393,1220,367,1187,345,1160,333,1136,326,1093,321,1049,317,1025,310,997,297,956,267,923,234"/>
+<area shape="poly" id="edge28_Node000005_Node000015" title=" " alt="" coords="817,218,751,238,718,253,688,271,668,290,652,312,631,351,626,349,648,309,665,287,685,267,716,248,749,233,816,213"/>
+<area shape="poly" id="edge31_Node000005_Node000017" title=" " alt="" coords="916,233,933,264,957,293,981,311,1008,326,1061,347,1059,352,1005,331,978,316,953,297,928,267,911,235"/>
+<area shape="poly" id="edge30_Node000005_Node000018" title=" " alt="" coords="957,225,1051,267,1049,272,955,229"/>
+<area shape="poly" id="edge32_Node000005_Node000019" title=" " alt="" coords="987,216,1268,270,1267,275,986,222"/>
+<area shape="rect" id="Node000007" href="$emit__arm64_8c.html" title="ARM64 instruction encoding implementation." alt="" coords="252,431,417,471"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="363,396,346,432,341,429,359,394"/>
+<area shape="poly" id="edge9_Node000006_Node000009" title=" " alt="" coords="421,387,504,436,502,440,419,392"/>
+<area shape="rect" id="Node000008" href="$pulse_8c.html" title=" " alt="" coords="575,519,665,544"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="417,472,579,516,578,521,415,477"/>
+<area shape="poly" id="edge10_Node000009_Node000008" title=" " alt="" coords="549,470,607,516,604,521,546,474"/>
+<area shape="poly" id="edge12_Node000010_Node000006" title=" " alt="" coords="719,300,459,348,458,343,718,295"/>
+<area shape="poly" id="edge19_Node000010_Node000009" title=" " alt="" coords="784,309,762,348,747,368,728,385,700,400,659,415,570,441,568,435,657,410,698,395,725,380,743,364,758,345,780,306"/>
+<area shape="poly" id="edge13_Node000010_Node000011" title=" " alt="" coords="899,295,938,312,955,325,969,341,975,354,977,367,973,394,963,420,951,439,946,437,958,417,968,393,972,367,970,355,964,344,951,329,935,317,897,299"/>
+<area shape="rect" id="Node000012" href="$emit__elf_8h.html" title="ELF (Executable and Linkable Format) structures and constants." alt="" coords="789,350,955,375"/>
+<area shape="poly" id="edge15_Node000010_Node000012" title=" " alt="" coords="816,303,862,348,858,352,812,306"/>
+<area shape="poly" id="edge20_Node000010_Node000014" title=" " alt="" coords="686,298,169,355,168,350,685,292"/>
+<area shape="poly" id="edge22_Node000010_Node000015" title=" " alt="" coords="756,303,650,352,647,348,754,298"/>
+<area shape="poly" id="edge26_Node000010_Node000017" title=" " alt="" coords="851,295,1058,347,1057,353,850,301"/>
+<area shape="poly" id="edge14_Node000011_Node000008" title=" " alt="" coords="881,469,666,521,665,516,880,464"/>
+<area shape="poly" id="edge17_Node000012_Node000009" title=" " alt="" coords="813,381,570,441,569,435,811,376"/>
+<area shape="poly" id="edge16_Node000012_Node000011" title=" " alt="" coords="892,385,933,436,928,439,888,388"/>
+<area shape="poly" id="edge18_Node000012_Node000013" title=" " alt="" coords="944,375,1251,436,1250,442,942,381"/>
+<area shape="poly" id="edge21_Node000014_Node000008" title=" " alt="" coords="111,382,167,427,203,450,241,468,331,496,423,514,508,523,575,527,574,532,507,528,422,519,330,501,239,473,200,454,164,431,107,387"/>
+<area shape="poly" id="edge23_Node000015_Node000009" title=" " alt="" coords="601,386,538,439,535,435,598,382"/>
+<area shape="rect" id="Node000016" href="$emit__x64_8c.html" title="x86&#45;64 instruction encoding implementation." alt="" coords="628,438,807,463"/>
+<area shape="poly" id="edge24_Node000015_Node000016" title=" " alt="" coords="649,383,706,435,703,439,645,387"/>
+<area shape="poly" id="edge25_Node000016_Node000008" title=" " alt="" coords="694,474,636,521,633,516,691,470"/>
+<area shape="poly" id="edge39_Node000020_Node000009" title=" " alt="" coords="155,304,190,344,213,364,238,380,331,406,467,435,466,441,330,411,236,385,210,368,187,347,151,307"/>
+<area shape="poly" id="edge40_Node000020_Node000014" title=" " alt="" coords="124,308,96,351,92,348,119,305"/>
+<area shape="poly" id="edge47_Node000021_Node000008" title=" " alt="" coords="1599,228,1568,302,1544,345,1514,384,1479,419,1448,441,1413,457,1367,473,1305,488,1222,500,1020,517,816,527,666,532,665,526,816,522,1019,512,1221,495,1304,483,1366,468,1411,452,1446,436,1476,414,1510,381,1540,342,1563,300,1594,226"/>
+</map>

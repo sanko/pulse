@@ -1,0 +1,32 @@
+<map id="fuzz/fuzz_emit.c" name="fuzz/fuzz_emit.c">
+<area shape="rect" id="Node000001" title="Fuzzer for the Pulse emit library (JIT code generation)." alt="" coords="157,5,285,31"/>
+<area shape="rect" id="Node000002" href="$emit_8h.html" title="Public API for the emit JIT code generation system." alt="" coords="133,152,270,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,31,207,139,202,138,217,31"/>
+<area shape="rect" id="Node000008" href="$emit__math_8h.html" title="Math operations for JIT code generation." alt="" coords="5,79,184,104"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="202,33,129,74,126,69,200,28"/>
+<area shape="rect" id="Node000009" href="$pulse__fuzz__helpers_8h.html" title="Common helper functions for Pulse fuzzers." alt="" coords="430,225,589,251"/>
+<area shape="poly" id="edge13_Node000001_Node000009" title=" " alt="" coords="238,29,485,215,482,219,235,33"/>
+<area shape="rect" id="Node000003" href="$pulse__common_8h.html" title="Common types and definitions shared across the pulse library." alt="" coords="234,225,406,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="222,175,290,216,287,220,219,180"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="92,299,175,324"/>
+<area shape="poly" id="edge7_Node000002_Node000004" title=" " alt="" coords="198,179,147,287,142,285,193,177"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="199,299,270,324"/>
+<area shape="poly" id="edge8_Node000002_Node000006" title=" " alt="" coords="207,177,232,285,226,286,201,178"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="291,253,177,296,176,291,289,248"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="295,299,369,324"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="325,251,330,285,325,286,319,251"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="308,253,261,292,257,288,305,249"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="394,299,465,324"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="339,248,401,289,398,293,336,253"/>
+<area shape="poly" id="edge10_Node000008_Node000002" title=" " alt="" coords="113,102,174,142,171,147,110,106"/>
+<area shape="poly" id="edge11_Node000008_Node000004" title=" " alt="" coords="92,105,82,132,73,169,70,210,78,250,91,271,108,288,104,292,87,274,74,252,65,210,68,168,77,130,87,103"/>
+<area shape="poly" id="edge12_Node000008_Node000006" title=" " alt="" coords="99,104,107,137,122,176,143,209,167,239,214,287,210,291,163,243,139,212,118,179,102,139,94,105"/>
+<area shape="poly" id="edge14_Node000009_Node000004" title=" " alt="" coords="445,253,189,301,188,296,444,248"/>
+<area shape="poly" id="edge15_Node000009_Node000005" title=" " alt="" coords="482,253,374,296,372,291,480,248"/>
+<area shape="poly" id="edge16_Node000009_Node000006" title=" " alt="" coords="466,253,284,300,283,295,465,248"/>
+<area shape="poly" id="edge19_Node000009_Node000007" title=" " alt="" coords="498,253,454,292,451,288,495,249"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="489,299,556,324"/>
+<area shape="poly" id="edge17_Node000009_Node000010" title=" " alt="" coords="514,251,521,285,515,286,509,251"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="581,299,651,324"/>
+<area shape="poly" id="edge18_Node000009_Node000011" title=" " alt="" coords="528,248,589,289,586,293,525,253"/>
+</map>

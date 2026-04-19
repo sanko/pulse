@@ -1,0 +1,9 @@
+<map id="infix_registry_t" name="infix_registry_t">
+<area shape="rect" id="Node000001" title="Internal definition of a named type registry." alt="" coords="130,93,249,119"/>
+<area shape="rect" id="Node000002" href="$structinfix__arena__t.html" title="Internal definition of a memory arena." alt="" coords="5,5,112,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="89,36,173,91,170,95,86,40"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="127,9,139,18,130,26,113,29,112,23,128,21,133,18,124,14"/>
+<area shape="rect" id="Node000003" href="$struct__infix__registry__entry__t.html" title="A single entry in the registry&#39;s hash table." alt="" coords="237,5,403,31"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="293,40,209,95,206,91,290,36"/>
+<area shape="poly" id="edge4_Node000003_Node000003" title=" " alt="" coords="419,10,430,18,422,25,404,28,403,23,420,20,425,18,416,15"/>
+</map>

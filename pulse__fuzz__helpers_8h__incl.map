@@ -1,0 +1,15 @@
+<map id="fuzz/pulse_fuzz_helpers.h" name="fuzz/pulse_fuzz_helpers.h">
+<area shape="rect" id="Node000001" title="Common helper functions for Pulse fuzzers." alt="" coords="199,5,388,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,88,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="254,33,100,77,99,72,253,28"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="112,79,187,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="271,33,186,75,184,70,269,28"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="211,79,282,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="288,32,264,69,260,66,283,30"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="307,79,373,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="303,30,327,66,323,69,299,32"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="398,79,469,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="317,28,400,70,397,75,315,33"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="493,79,563,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="332,28,480,73,479,78,330,33"/>
+</map>

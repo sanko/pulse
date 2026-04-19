@@ -1,0 +1,13 @@
+<map id="scope" name="scope">
+<area shape="rect" id="Node000001" title=" " alt="" coords="105,319,165,345"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="180,322,188,325,191,332,183,341,165,343,165,338,181,336,186,332,184,329,178,327"/>
+<area shape="rect" id="Node000002" href="$structsymbol.html" title=" " alt="" coords="99,229,170,255"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="137,268,137,319,132,319,132,268"/>
+<area shape="poly" id="edge7_Node000002_Node000002" title=" " alt="" coords="185,233,193,236,197,242,188,251,171,253,170,247,186,246,191,242,190,240,183,238"/>
+<area shape="rect" id="Node000003" href="$structtype.html" title=" " alt="" coords="5,73,56,99"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="48,109,129,228,125,231,44,112"/>
+<area shape="poly" id="edge4_Node000003_Node000003" title=" " alt="" coords="53,64,63,62,73,66,80,74,83,86,79,101,68,109,54,109,40,101,43,96,55,103,66,104,74,98,77,86,75,76,70,70,63,68,54,69"/>
+<area shape="rect" id="Node000004" href="$structast__node.html" title=" " alt="" coords="199,73,281,99"/>
+<area shape="poly" id="edge5_Node000002_Node000004" title=" " alt="" coords="227,112,189,168,145,231,141,228,184,165,223,109"/>
+<area shape="poly" id="edge6_Node000004_Node000004" title=" " alt="" coords="266,65,280,62,294,65,304,73,307,86,302,101,288,109,271,109,253,101,255,96,272,103,287,104,298,98,302,86,299,76,292,70,280,68,267,70"/>
+</map>

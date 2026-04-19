@@ -1,0 +1,46 @@
+<map id="include/pulse/emit/emit_math.h" name="include/pulse/emit/emit_math.h">
+<area shape="rect" id="Node000001" title="Math operations for JIT code generation." alt="" coords="893,5,1035,45"/>
+<area shape="rect" id="Node000002" href="$fuzz__emit_8c.html" title="Fuzzer for the Pulse emit library (JIT code generation)." alt="" coords="5,93,133,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="879,35,559,58,152,96,134,98,133,93,152,91,559,53,879,29"/>
+<area shape="rect" id="Node000003" href="$emit__arm64_8h.html" title="ARM64 (AArch64) instruction encoding declarations." alt="" coords="1061,167,1227,207"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="997,52,1124,165,1121,169,994,56"/>
+<area shape="rect" id="Node000006" href="$emit__math_8c.html" title="Implementation of the emit API for generating machine code." alt="" coords="606,262,767,287"/>
+<area shape="poly" id="edge23_Node000001_Node000006" title=" " alt="" coords="1050,44,1132,71,1173,88,1209,107,1237,129,1254,153,1257,167,1257,180,1251,194,1241,208,1225,222,1204,232,1153,247,1090,254,1022,256,885,254,826,254,780,257,740,265,739,259,780,252,826,249,885,249,1022,251,1090,249,1152,242,1202,227,1222,217,1237,205,1246,192,1251,179,1252,167,1249,156,1233,133,1206,112,1171,93,1130,76,1048,49"/>
+<area shape="rect" id="Node000007" href="$emit__internals_8h.html" title="Internal structures for the emit JIT code generation system." alt="" coords="589,93,774,119"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="884,52,723,96,722,91,883,46"/>
+<area shape="rect" id="Node000010" href="$180__emit_8c.html" title="Unit test for the emit API (JIT compiler and Executable builder suite)." alt="" coords="167,262,270,287"/>
+<area shape="poly" id="edge25_Node000001_Node000010" title=" " alt="" coords="878,32,707,41,605,51,502,64,402,82,314,105,244,134,217,150,198,168,192,179,189,191,192,216,202,241,213,261,208,263,197,243,187,217,184,190,187,177,194,165,214,146,241,129,312,100,401,77,501,59,605,46,707,36,878,26"/>
+<area shape="rect" id="Node000012" href="$emit__x64_8h.html" title="x86&#45;64 instruction encoding declarations." alt="" coords="686,174,866,199"/>
+<area shape="poly" id="edge24_Node000001_Node000012" title=" " alt="" coords="933,56,791,176,788,172,930,52"/>
+<area shape="rect" id="Node000014" href="$190__emit__direct_8c.html" title="Unified Test Suite: Infix Emit API &amp; Pulse Language Compiler." alt="" coords="891,174,1037,199"/>
+<area shape="poly" id="edge27_Node000001_Node000014" title=" " alt="" coords="967,59,967,174,961,174,961,59"/>
+<area shape="rect" id="Node000015" href="$185__emit__file_8c.html" title="Unit test for emit_write_file() &#45; generates and runs executables." alt="" coords="1301,93,1432,119"/>
+<area shape="poly" id="edge26_Node000001_Node000015" title=" " alt="" coords="1049,40,1308,91,1307,96,1048,46"/>
+<area shape="rect" id="Node000016" href="$200__ffi_8c.html" title="Test Suite: Infix FFI Integration (Optional)" alt="" coords="1457,93,1543,119"/>
+<area shape="poly" id="edge28_Node000001_Node000016" title=" " alt="" coords="1049,34,1231,58,1444,91,1457,93,1456,98,1444,96,1231,63,1049,40"/>
+<area shape="rect" id="Node000004" href="$emit__arm64_8c.html" title="ARM64 instruction encoding implementation." alt="" coords="1039,255,1204,295"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1138,221,1129,255,1124,254,1133,219"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="1048,210,780,257,743,265,742,259,780,252,1047,204"/>
+<area shape="rect" id="Node000005" href="$pulse_8c.html" title=" " alt="" coords="641,343,732,368"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="1025,296,733,348,732,343,1024,291"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="689,301,689,342,684,342,684,301"/>
+<area shape="poly" id="edge8_Node000007_Node000003" title=" " alt="" coords="770,118,1050,164,1061,166,1060,171,1049,169,770,123"/>
+<area shape="poly" id="edge15_Node000007_Node000006" title=" " alt="" coords="680,133,676,167,676,206,686,261,681,262,671,207,671,167,675,132"/>
+<area shape="rect" id="Node000008" href="$emit__elf_8c.html" title="ELF (Executable and Linkable Format) binary format support." alt="" coords="418,262,582,287"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="660,130,514,264,511,260,657,126"/>
+<area shape="rect" id="Node000009" href="$emit__elf_8h.html" title="ELF (Executable and Linkable Format) structures and constants." alt="" coords="395,174,560,199"/>
+<area shape="poly" id="edge11_Node000007_Node000009" title=" " alt="" coords="640,126,508,176,506,171,638,121"/>
+<area shape="rect" id="Node000011" href="$emit__pe_8c.html" title="PE (Portable Executable) binary format support for emit system." alt="" coords="208,174,371,199"/>
+<area shape="poly" id="edge16_Node000007_Node000011" title=" " alt="" coords="611,124,383,169,347,177,346,171,382,164,610,119"/>
+<area shape="poly" id="edge18_Node000007_Node000012" title=" " alt="" coords="708,126,764,172,760,176,704,130"/>
+<area shape="poly" id="edge22_Node000007_Node000014" title=" " alt="" coords="736,120,924,171,922,177,735,125"/>
+<area shape="poly" id="edge10_Node000008_Node000005" title=" " alt="" coords="541,290,661,340,658,345,539,295"/>
+<area shape="poly" id="edge13_Node000009_Node000006" title=" " alt="" coords="519,202,660,259,658,264,517,207"/>
+<area shape="poly" id="edge12_Node000009_Node000008" title=" " alt="" coords="486,212,499,261,494,262,481,213"/>
+<area shape="poly" id="edge14_Node000009_Node000010" title=" " alt="" coords="430,206,254,264,253,259,429,201"/>
+<area shape="poly" id="edge17_Node000011_Node000005" title=" " alt="" coords="309,208,350,252,377,274,407,292,467,317,531,334,591,344,642,349,641,354,591,349,530,339,466,322,404,297,374,278,347,256,305,212"/>
+<area shape="poly" id="edge19_Node000012_Node000006" title=" " alt="" coords="756,211,701,263,697,260,752,207"/>
+<area shape="rect" id="Node000013" href="$emit__x64_8c.html" title="x86&#45;64 instruction encoding implementation." alt="" coords="792,262,971,287"/>
+<area shape="poly" id="edge20_Node000012_Node000013" title=" " alt="" coords="802,206,869,260,865,264,799,210"/>
+<area shape="poly" id="edge21_Node000013_Node000005" title=" " alt="" coords="841,295,716,345,714,340,840,290"/>
+</map>

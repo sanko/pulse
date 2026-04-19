@@ -1,0 +1,9 @@
+<map id="include/common/platform.h" name="include/common/platform.h">
+<area shape="rect" id="Node000001" title="Declares internal, runtime CPU/OS feature detection functions." alt="" coords="187,5,390,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,180,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,33,138,76,137,71,256,28"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="204,79,373,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="291,31,291,65,286,65,286,31"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="398,79,481,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="314,28,403,70,401,75,312,33"/>
+</map>

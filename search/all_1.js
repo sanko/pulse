@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['1_201_20guiding_20principles_0',['1.1 Guiding Principles',['../md_docs_2internals.html#autotoc_md146',1,'']]],
+  ['1_201_20the_20challenge_20of_20interoperability_1',['1.1 The Challenge of Interoperability',['../md_docs_2signatures.html#autotoc_md187',1,'']]],
+  ['1_202_20key_20architectural_20decisions_2',['1.2 Key Architectural Decisions',['../md_docs_2internals.html#autotoc_md147',1,'']]],
+  ['1_202_20the_20limitations_20of_20c_20declarations_3',['1.2 The Limitations of C Declarations',['../md_docs_2signatures.html#autotoc_md188',1,'']]],
+  ['1_203_20our_20solution_3a_20a_20human_20first_20signature_20system_4',['1.3 Our Solution: A Human-First Signature System',['../md_docs_2signatures.html#autotoc_md189',1,'']]],
+  ['1_20compiler_20api_5',['1. Compiler API',['../md_docs_2API.html#autotoc_md20',1,'']]],
+  ['1_20core_20design_20philosophy_6',['1. Core Design Philosophy',['../md_docs_2internals.html#autotoc_md145',1,'']]],
+  ['1_20lexer_20tokenization_7',['2.1 Lexer (Tokenization)',['../md_docs_2internals.html#autotoc_md152',1,'']]],
+  ['1_20primitives_8',['2.1 Primitives',['../md_docs_2signatures.html#autotoc_md191',1,'']]],
+  ['1_20supported_20backends_9',['4.1 Supported Backends',['../md_docs_2internals.html#autotoc_md166',1,'']]],
+  ['1_20the_20easiest_20way_3a_20add_20tt_20infix_20tt_20directly_20to_20your_20project_10',['1. The Easiest Way: Add &lt;tt&gt;infix&lt;/tt&gt; Directly to Your Project',['../md_docs_2INSTALL.html#autotoc_md129',1,'']]],
+  ['1_20variables_20and_20constants_11',['3.1 Variables and Constants',['../md_docs_2internals.html#autotoc_md159',1,'']]],
+  ['1_20w_20x_20write_20xor_20execute_20memory_20policy_12',['1. W^X (Write XOR Execute) Memory Policy',['../md_SECURITY.html#autotoc_md224',1,'']]],
+  ['1_20whitespace_20and_20comments_13',['4.1 Whitespace and Comments',['../md_docs_2signatures.html#autotoc_md207',1,'']]],
+  ['180_5femit_2ec_14',['180_emit.c',['../180__emit_8c.html',1,'']]],
+  ['185_5femit_5ffile_2ec_15',['185_emit_file.c',['../185__emit__file_8c.html',1,'']]],
+  ['190_5femit_5fdirect_2ec_16',['190_emit_direct.c',['../190__emit__direct_8c.html',1,'']]],
+  ['1_3a_20abstract_20c_20types_17',['Tier 1: Abstract C Types',['../md_docs_2signatures.html#autotoc_md192',1,'']]],
+  ['1_3a_20ast_20and_20bytecode_20dumping_18',['Method 1: AST and Bytecode Dumping',['../md_docs_2internals.html#autotoc_md173',1,'']]],
+  ['1_3a_20getting_20started_19',['Chapter 1: Getting Started',['../md_docs_2cookbook.html#autotoc_md84',1,'']]],
+  ['1_3a_20introduction_20',['Part 1: Introduction',['../md_docs_2signatures.html#autotoc_md186',1,'']]],
+  ['1_3a_20platform_20detection_20tt_20src_20common_20pulse_5fconfig_20h_20tt_21',['Step 1: Platform Detection (&lt;tt&gt;src/common/pulse_config.h&lt;/tt&gt;)',['../md_docs_2porting.html#autotoc_md180',1,'']]]
+];

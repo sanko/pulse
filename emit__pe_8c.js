@@ -1,0 +1,25 @@
+var emit__pe_8c =
+[
+    [ "image_dos_header_t", "structimage__dos__header__t.html", "structimage__dos__header__t" ],
+    [ "image_file_header_t", "structimage__file__header__t.html", "structimage__file__header__t" ],
+    [ "image_data_directory_t", "structimage__data__directory__t.html", "structimage__data__directory__t" ],
+    [ "image_optional_header32_t", "structimage__optional__header32__t.html", "structimage__optional__header32__t" ],
+    [ "image_optional_header64_t", "structimage__optional__header64__t.html", "structimage__optional__header64__t" ],
+    [ "image_section_header_t", "structimage__section__header__t.html", "structimage__section__header__t" ],
+    [ "image_import_descriptor_t", "structimage__import__descriptor__t.html", "structimage__import__descriptor__t" ],
+    [ "IMAGE_DIRECTORY_ENTRY_BASERELOC", "emit__pe_8c.html#a7fc0447c3429661758a677409821f2ee", null ],
+    [ "IMAGE_DIRECTORY_ENTRY_IMPORT", "emit__pe_8c.html#a1f7696d87d4aa43f3464998709d203db", null ],
+    [ "IMAGE_DOS_SIGNATURE", "emit__pe_8c.html#acde26d24b0ff46215cbd029d8ae87e4d", null ],
+    [ "IMAGE_NT_SIGNATURE", "emit__pe_8c.html#a83570e3e2fba8cb7c2abc8b3eee47d48", null ],
+    [ "IMAGE_NUMBEROF_DIRECTORY_ENTRIES", "emit__pe_8c.html#a75892b738729f0de64146086f462defe", null ],
+    [ "IMAGE_SIZEOF_FILE_HEADER", "emit__pe_8c.html#a9bbb20a3385af8d9280f0e28060530ed", null ],
+    [ "PE_ALIGN", "emit__pe_8c.html#ab5dfbb0db3dc89328971f84f993c4780", null ],
+    [ "PE_ALIGN_DOWN", "emit__pe_8c.html#afc074eb9124a35368ee439b40c420c14", null ],
+    [ "PULSE_BUILDING", "emit__pe_8c.html#a22c1c8ac1c391eb937d1943471c9d502", null ],
+    [ "build_code_with_exitcall", "emit__pe_8c.html#a12dec9e0387f630aded142495fd7c72d", null ],
+    [ "emit_write_pe", "emit__pe_8c.html#acef9654750f39fe16fed1f1cc9e8cbef", null ],
+    [ "emit_write_pe_exec_internal", "emit__pe_8c.html#a8cf123bb962f10d2534a21479e2cfc62", null ],
+    [ "pe_get_machine", "emit__pe_8c.html#a25524f249cc7165dde06ae1234ae64b3", null ],
+    [ "write_dos_stub", "emit__pe_8c.html#a3375bdbb4c3db93510d303fb1c6eab14", null ],
+    [ "write_section_header", "emit__pe_8c.html#a57cdbc12504da6fb2a7ea14da8b56fff", null ]
+];
