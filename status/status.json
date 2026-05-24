@@ -33,6 +33,10 @@
 ,
 "solaris-x86_64-gcc": "👎🏽 failing"
 ,
+"ubuntu-aarch64-clang": "👎🏽 failing"
+,
+"ubuntu-aarch64-gcc": "👎🏽 failing"
+,
 "ubuntu-x86_64-clang": "👍🏽 passing"
 ,
 "ubuntu-x86_64-gcc": "👍🏽 passing"
