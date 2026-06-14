@@ -27,4 +27,4 @@
 | **windows** | `aarch64` | `msvc` | ❌ failure |
 | **windows** | `x86_64` | `clang` | ❌ failure |
 | **windows** | `x86_64` | `gcc` | ❌ failure |
-| **windows** | `x86_64` | `msvc` | ✅ success |
+| **windows** | `x86_64` | `msvc` | ❌ failure |
